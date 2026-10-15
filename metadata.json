@@ -1,0 +1,6 @@
+{
+  "name": "NutriSpend & FitTrack",
+  "description": "Optimizador de dieta, comparador de compras HEB vs Costco, registro de entrenamientos de Coros, Polar y Apple Fitness, y cálculo de gasto calórico total en tiempo real.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
