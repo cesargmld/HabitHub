@@ -10,13 +10,14 @@ interface DayTrendPoint {
 }
 
 interface WeeklyTrendChartProps {
-  trendData: DayTrendPoint[];
+  trendData?: DayTrendPoint[];
 }
 
-export const WeeklyTrendChart: React.FC<WeeklyTrendChartProps> = ({ trendData }) => {
+export const WeeklyTrendChart: React.FC<WeeklyTrendChartProps> = ({ trendData = [] }) => {
+  const safeData = Array.isArray(trendData) ? trendData : [];
   const maxVal = Math.max(
     3000,
-    ...trendData.map(d => Math.max(d.burned, d.consumed))
+    ...(safeData.length > 0 ? safeData.map(d => Math.max(d?.burned || 0, d?.consumed || 0)) : [3000])
   );
 
   return (
@@ -39,7 +40,7 @@ export const WeeklyTrendChart: React.FC<WeeklyTrendChartProps> = ({ trendData })
       </div>
 
       <div className="grid grid-cols-7 gap-2 pt-2 items-end h-32">
-        {trendData.map((d, i) => {
+        {safeData.map((d, i) => {
           const burnedHeight = Math.max(8, Math.round((d.burned / maxVal) * 95));
           const consumedHeight = Math.max(8, Math.round((d.consumed / maxVal) * 95));
 

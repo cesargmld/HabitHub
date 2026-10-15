@@ -49,20 +49,20 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
   const [localCheckedMap, setLocalCheckedMap] = useState<Record<string, boolean>>({});
 
   const {
-    costcoItems,
-    hebItems,
-    allGroceryItems,
-    perishableItems,
-    bulkPantryItems,
-    totalCostMxn,
-    costcoSubtotalMxn,
-    hebSubtotalMxn,
-    estimatedSavingsMxn,
-    savingsPercentage,
-    totalProteinGramsInCart,
-    costPerGramProteinMxn,
-    totalMealsCookedCount
-  } = optimizationResult;
+    costcoItems = [],
+    hebItems = [],
+    allGroceryItems = [],
+    perishableItems = [],
+    bulkPantryItems = [],
+    totalCostMxn = 0,
+    costcoSubtotalMxn = 0,
+    hebSubtotalMxn = 0,
+    estimatedSavingsMxn = 0,
+    savingsPercentage = 0,
+    totalProteinGramsInCart = 0,
+    costPerGramProteinMxn = 0,
+    totalMealsCookedCount = 0
+  } = optimizationResult || {};
 
   const toggleCheck = (id: string) => {
     setLocalCheckedMap(prev => ({

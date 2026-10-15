@@ -570,7 +570,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                       Cálculo de Costo Real por Ingrediente (Mercado Mexicano):
                     </span>
                     <div className="divide-y divide-slate-200 dark:divide-white/5">
-                      {entry.dish.ingredients.map((ing, iIdx) => {
+                      {(entry.dish.ingredients || []).map((ing, iIdx) => {
                         const verified = computeVerifiedIngredientCost(ing.name, ing.amount, ing.unit);
                         return (
                           <div key={iIdx} className="py-1.5 flex items-center justify-between">

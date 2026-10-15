@@ -595,19 +595,31 @@ export default function App() {
         {currentTab === 'dashboard' && (
           <DailyDashboard
             currentDate={currentDate}
+            onChangeDate={setCurrentDate}
             profile={profile}
             workouts={workouts}
             mealPlan={mealPlan}
+            dayWorkouts={workouts.filter(w => w.date === currentDate)}
+            dayMeals={mealPlan.filter(m => m.date === currentDate)}
+            allWorkouts={workouts}
+            allMeals={mealPlan}
             dailySummary={dailySummary}
             onToggleMealEaten={handleToggleMealEaten}
             onDeleteMealEntry={handleDeleteMealEntry}
-            onOpenAddMealModal={() => setIsAddMealModalOpen(true)}
+            onOpenAddMealModal={(mealTime) => {
+              if (mealTime) setSelectedMealTimeForAdd(mealTime as MealTime);
+              setIsAddMealModalOpen(true);
+            }}
+            onNavigateTab={setCurrentTab}
             fastingState={fastingState}
             onUpdateFastingState={setFastingState}
             waterMl={currentWaterMl}
             onAddWater={handleAddWater}
             onResetWater={handleResetWater}
             onOpenAppleHealthModal={() => setIsAppleHealthModalOpen(true)}
+            onOpenBarcodeScanner={() => setIsBarcodeScannerOpen(true)}
+            onOpenWeeklyReport={() => setIsWeeklyReportOpen(true)}
+            onDeleteWorkout={handleDeleteWorkout}
           />
         )}
 

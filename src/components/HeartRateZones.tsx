@@ -3,11 +3,11 @@ import { Heart } from 'lucide-react';
 import { WorkoutRecord } from '../types';
 
 interface HeartRateZonesProps {
-  workouts: WorkoutRecord[];
-  maxHrEstimate: number; // e.g. 220 - age
+  workouts?: WorkoutRecord[];
+  maxHrEstimate?: number; // e.g. 220 - age
 }
 
-export const HeartRateZones: React.FC<HeartRateZonesProps> = ({ workouts, maxHrEstimate }) => {
+export const HeartRateZones: React.FC<HeartRateZonesProps> = ({ workouts = [], maxHrEstimate = 190 }) => {
   // Compute approximate minutes in zones based on average heart rate of recorded workouts
   const zones = [
     { name: 'Zona 1', range: '< 60%', label: 'Recuperación', color: '#60A5FA', minutes: 0 },
@@ -17,10 +17,12 @@ export const HeartRateZones: React.FC<HeartRateZonesProps> = ({ workouts, maxHrE
     { name: 'Zona 5', range: '> 90%', label: 'Máximo / VO2 Máx', color: '#F87171', minutes: 0 },
   ];
 
-  workouts.forEach(w => {
+  const safeWorkouts = Array.isArray(workouts) ? workouts : [];
+  safeWorkouts.forEach(w => {
+    if (!w) return;
     const hr = w.avgHeartRate || 135;
     const pct = hr / (maxHrEstimate || 190);
-    const duration = w.durationMinutes;
+    const duration = w.durationMinutes || 0;
 
     if (pct < 0.60) zones[0].minutes += duration;
     else if (pct < 0.70) zones[1].minutes += duration;

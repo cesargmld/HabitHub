@@ -186,7 +186,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         <div className="flex items-center gap-1.5">
           {!isToday && (
             <button
-              onClick={() => onChangeDate(new Date().toISOString().split('T')[0])}
+              onClick={() => onChangeDate && onChangeDate(new Date().toISOString().split('T')[0])}
               className="px-3 py-1 text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] rounded-full transition-colors cursor-pointer shadow-sm active:scale-95"
             >
               Hoy
@@ -254,7 +254,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
             Daily Activity
           </h3>
           <button
-            onClick={() => onNavigateTab('workouts')}
+            onClick={() => onNavigateTab && onNavigateTab('workouts')}
             className="text-xs font-bold text-white hover:text-slate-300 cursor-pointer flex items-center gap-1"
           >
             <span>See all</span>
@@ -414,7 +414,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         )}
 
         <button
-          onClick={() => onNavigateTab('monthly_diets')}
+          onClick={() => onNavigateTab && onNavigateTab('monthly_diets')}
           className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
         >
           <FolderArchive className="w-3.5 h-3.5 text-[#CCFF00]" />
@@ -457,8 +457,8 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
       {/* Heart Rate Training Zones (Coros, Polar, Apple Watch) */}
       <HeartRateZones
-        workouts={dayWorkouts}
-        maxHrEstimate={220 - profile.age}
+        workouts={effectiveDayWorkouts}
+        maxHrEstimate={220 - (profile?.age || 25)}
       />
 
       {/* Comidas del Día / Food Plan */}
