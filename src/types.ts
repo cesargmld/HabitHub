@@ -1,4 +1,13 @@
-export type DeviceSource = 'coros' | 'polar' | 'apple_fitness' | 'garmin' | 'manual';
+export type DeviceSource = 
+  | 'coros' 
+  | 'polar' 
+  | 'apple_fitness' 
+  | 'garmin' 
+  | 'strava' 
+  | 'nike' 
+  | 'whoop' 
+  | 'suunto' 
+  | 'manual';
 
 export type ActivityType = 
   | 'running' 
@@ -24,8 +33,61 @@ export interface WorkoutRecord {
   maxHeartRate?: number;
   distanceKm?: number;
   elevationGainM?: number;
+  paceMinPerKm?: string;
   notes?: string;
   sourceFileName?: string;
+  screenshotUrl?: string;
+}
+
+export interface WorkoutScreenshotResult {
+  title: string;
+  deviceSource: DeviceSource;
+  activityType: ActivityType;
+  durationMinutes: number;
+  caloriesBurned: number;
+  avgHeartRate?: number;
+  maxHeartRate?: number;
+  distanceKm?: number;
+  elevationGainM?: number;
+  paceMinPerKm?: string;
+  date: string;
+  time?: string;
+  confidenceNotes?: string;
+  detectedApp?: string;
+}
+
+export interface ProductStoreComparison {
+  priceMxn: number;
+  unitPricePerKgMxn: number;
+  packageSize: string;
+  notes: string;
+}
+
+export interface ProductComparisonResult {
+  name: string;
+  brand: string;
+  category: string;
+  estimatedWeightG?: number;
+  packageDescription: string;
+  stores: {
+    costco?: ProductStoreComparison;
+    heb?: ProductStoreComparison;
+    walmart?: ProductStoreComparison;
+  };
+  winner: 'costco' | 'heb' | 'walmart' | 'tie';
+  savingPercentage: number;
+  recommendation: string;
+  annualSavingEstimateMxn?: number;
+  confidenceNotes?: string;
+}
+
+export interface AppleHealthMetrics {
+  date: string;
+  activeCalories: number;
+  totalSteps: number;
+  exerciseMinutes: number;
+  restingHeartRate?: number;
+  lastSyncTimestamp: string;
 }
 
 export type MealTime = 'breakfast' | 'morning_snack' | 'lunch' | 'afternoon_snack' | 'dinner';
@@ -37,6 +99,16 @@ export interface IngredientRequirement {
   unit: 'g' | 'ml' | 'pza' | 'taza' | 'cda';
   preferredStore?: 'costco' | 'heb' | 'walmart' | 'any';
   estimatedCostMxn?: number;
+}
+
+export interface IngredientSubstitute {
+  originalIngredient: string;
+  substituteIngredient: string;
+  amount: string;
+  calories: number;
+  proteinG: number;
+  savingMxn: number;
+  notes: string;
 }
 
 export interface MealDish {
@@ -53,6 +125,9 @@ export interface MealDish {
   ingredients: IngredientRequirement[];
   instructions?: string;
   recommendedStoreNotes?: string;
+  assignedDay?: string; // 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'
+  dayOfWeek?: number; // 0=Domingo, 1=Lunes, 2=Martes...
+  substitutes?: IngredientSubstitute[];
 }
 
 export interface MealPlanEntry {
@@ -93,6 +168,8 @@ export interface GroceryItem {
   alternativePriceMxn?: number;
   savingsMxn?: number;
   isChecked: boolean;
+  isPerishable: boolean; // True: Buy weekly at HEB; False: Buy monthly at Costco
+  shelfLifeDays?: number;
 }
 
 export interface UserProfile {
@@ -139,6 +216,8 @@ export interface MonthlyDietPlan {
   dishes: MealDish[];
   originalFileName?: string;
   nutritionistName?: string;
+  recommendations?: string[];
+  snacks?: string[];
 }
 
 export interface FastingSession {

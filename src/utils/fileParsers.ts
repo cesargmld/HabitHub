@@ -226,6 +226,80 @@ export function parseJSONWorkout(jsonText: string, userWeightKg: number): Parsed
 }
 
 /**
+ * Parses native Apple Health export.xml (from iOS Health app > Profile > Export all health data).
+ */
+export function parseAppleHealthXML(xmlText: string, userWeightKg: number): ParsedWorkoutResult[] {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+  const workoutNodes = xmlDoc.querySelectorAll('Workout');
+
+  const results: ParsedWorkoutResult[] = [];
+
+  workoutNodes.forEach((node) => {
+    const rawType = (node.getAttribute('workoutActivityType') || '').toLowerCase();
+    const durationMin = Math.round(parseFloat(node.getAttribute('duration') || '0'));
+    const calories = Math.round(parseFloat(node.getAttribute('totalEnergyBurned') || '0'));
+    const distance = parseFloat(node.getAttribute('totalDistance') || '0');
+    const startDateStr = node.getAttribute('startDate') || '';
+
+    let activityType: ActivityType = 'running';
+    let title = 'Entrenamiento Apple Watch';
+
+    if (rawType.includes('running')) {
+      activityType = 'running';
+      title = 'Carrera (Apple Fitness)';
+    } else if (rawType.includes('cycling') || rawType.includes('biking')) {
+      activityType = 'cycling_road';
+      title = 'Ciclismo (Apple Fitness)';
+    } else if (rawType.includes('strength') || rawType.includes('functional')) {
+      activityType = 'strength_training';
+      title = 'Fuerza / Pesas (Apple Fitness)';
+    } else if (rawType.includes('highintensity') || rawType.includes('hiit')) {
+      activityType = 'hiit';
+      title = 'Sesión HIIT (Apple Fitness)';
+    } else if (rawType.includes('swimming')) {
+      activityType = 'swimming';
+      title = 'Natación (Apple Fitness)';
+    } else if (rawType.includes('walking')) {
+      activityType = 'walking';
+      title = 'Caminata (Apple Fitness)';
+    }
+
+    const datePart = startDateStr ? startDateStr.slice(0, 10) : new Date().toISOString().split('T')[0];
+    const timePart = startDateStr && startDateStr.length >= 16 ? startDateStr.slice(11, 16) : '08:00';
+
+    const finalCalories = calories > 0 ? calories : estimateWorkoutCalories(activityType, durationMin || 30, userWeightKg);
+
+    results.push({
+      title,
+      deviceSource: 'apple_fitness',
+      activityType,
+      durationMinutes: Math.max(1, durationMin || 30),
+      caloriesBurned: finalCalories,
+      distanceKm: distance > 0 ? parseFloat(distance.toFixed(2)) : undefined,
+      date: datePart,
+      time: timePart
+    });
+  });
+
+  return results;
+}
+
+/**
+ * Converts a browser File to base64 string.
+ */
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
  * Universal auto-dispatcher for workout files.
  */
 export async function parseWorkoutFile(file: File, userWeightKg: number): Promise<ParsedWorkoutResult> {
@@ -238,15 +312,24 @@ export async function parseWorkoutFile(file: File, userWeightKg: number): Promis
     return parseGPX(text, userWeightKg);
   } else if (fileName.endsWith('.json')) {
     return parseJSONWorkout(text, userWeightKg);
-  } else {
-    // If user dropped an XML/FIT-like text or export format, try TCX then JSON
-    try {
-      if (text.includes('<TrainingCenterDatabase') || text.includes('<Activity')) {
-        return parseTCX(text, userWeightKg);
-      }
-      return parseJSONWorkout(text, userWeightKg);
-    } catch {
-      throw new Error('Formato de archivo no reconocido. Sube un archivo .tcx, .gpx o .json exportado de Coros, Polar o Apple Fitness.');
+  } else if (fileName.includes('export') && fileName.endsWith('.xml')) {
+    const workouts = parseAppleHealthXML(text, userWeightKg);
+    if (workouts.length > 0) {
+      return workouts[workouts.length - 1]; // Return the latest workout
     }
+  }
+
+  // Fallback checks
+  try {
+    if (text.includes('<TrainingCenterDatabase') || text.includes('<Activity')) {
+      return parseTCX(text, userWeightKg);
+    }
+    if (text.includes('<HealthData') || text.includes('<Workout')) {
+      const workouts = parseAppleHealthXML(text, userWeightKg);
+      if (workouts.length > 0) return workouts[workouts.length - 1];
+    }
+    return parseJSONWorkout(text, userWeightKg);
+  } catch {
+    throw new Error('Formato no reconocido. Sube un archivo .tcx, .gpx, .json o export.xml de Apple Health.');
   }
 }

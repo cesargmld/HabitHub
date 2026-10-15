@@ -11,18 +11,22 @@ import {
   Zap,
   FolderArchive,
   ScanLine,
-  FileText
+  FileText,
+  Trophy
 } from 'lucide-react';
 
 interface NavbarProps {
   currentTab: 'dashboard' | 'planner' | 'monthly_diets' | 'supermarket' | 'workouts';
   onSelectTab: (tab: 'dashboard' | 'planner' | 'monthly_diets' | 'supermarket' | 'workouts') => void;
-  onOpenQuickWorkout: () => void;
-  onOpenProfile: () => void;
-  userName: string;
+  onOpenQuickWorkout?: () => void;
+  onOpenProfile?: () => void;
+  onOpenProfileModal?: () => void;
+  userName?: string;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  todayDateStr: string;
+  todayDateStr?: string;
+  currentDate?: string;
+  onChangeDate?: (date: string) => void;
   onOpenBarcodeScanner?: () => void;
   onOpenWeeklyReport?: () => void;
 }
@@ -32,14 +36,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   onSelectTab,
   onOpenQuickWorkout,
   onOpenProfile,
-  userName,
+  onOpenProfileModal,
+  userName = 'Cesar',
   theme,
   onToggleTheme,
   todayDateStr,
+  currentDate,
   onOpenBarcodeScanner,
   onOpenWeeklyReport
 }) => {
-  const [year, month, day] = todayDateStr.split('-').map(Number);
+  const effectiveDateStr = currentDate || todayDateStr || new Date().toISOString().split('T')[0];
+  const [year, month, day] = effectiveDateStr.split('-').map(Number);
   const dateObj = new Date(year, month - 1, day);
   const shortDate = dateObj.toLocaleDateString('es-MX', {
     weekday: 'short',
@@ -47,57 +54,59 @@ export const Navbar: React.FC<NavbarProps> = ({
     month: 'short'
   }).toUpperCase();
 
+  const handleProfileClick = onOpenProfile || onOpenProfileModal || (() => {});
+
   return (
     <>
-      {/* Top Mobile & Desktop Header (Apple Frosted Glass) */}
-      <header className="sticky top-0 z-40 bg-[#FFFFFF]/80 dark:bg-[#000000]/80 backdrop-blur-2xl border-b border-black/[0.05] dark:border-white/[0.08] px-4 sm:px-6 py-2.5 transition-colors">
+      {/* Top Athletic Header */}
+      <header className="sticky top-0 z-40 bg-[#0B0C10]/90 backdrop-blur-2xl border-b border-white/[0.06] px-4 sm:px-6 py-3 transition-colors">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
           
-          {/* Left Slot: User Profile Avatar & App Name */}
-          <div className="flex items-center gap-2.5">
+          {/* Left Slot: Avatar, "Hello Cesar!" and "Let's start your day" */}
+          <div className="flex items-center gap-3">
             <button
-              onClick={onOpenProfile}
-              className="relative p-0.5 rounded-full border border-black/10 dark:border-white/15 hover:border-[#A1FF00] transition-colors cursor-pointer shrink-0"
+              onClick={handleProfileClick}
+              className="relative p-0.5 rounded-full border border-white/10 hover:border-white/30 transition-colors cursor-pointer shrink-0 group"
               title="Ajustes de Perfil"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#A1FF00] to-[#00F0FF] flex items-center justify-center text-black font-extrabold text-[12px] shadow-sm">
+              <div className="w-9 h-9 rounded-full bg-[#181B26] border border-white/10 flex items-center justify-center text-white font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#A1FF00] border-2 border-white dark:border-black" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#CCFF00] border-2 border-[#0B0C10]" />
             </button>
 
             <div>
-              <span className="text-[10px] uppercase font-bold text-[#8E8E93] tracking-wider block leading-none">
-                {shortDate}
-              </span>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[16px] font-extrabold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight">
-                  Habithub
+              <div className="flex items-center gap-1.5">
+                <span className="text-[15px] sm:text-[17px] font-black text-white tracking-tight">
+                  Hello {userName.split(' ')[0]}!
                 </span>
               </div>
+              <span className="text-[11px] font-medium text-[#7E8494] block leading-tight">
+                Let's start your day · {shortDate}
+              </span>
             </div>
           </div>
 
-          {/* Center Slot (Desktop Segmented Bar, hidden on mobile) */}
-          <nav className="hidden md:flex items-center gap-1 bg-[#F2F2F7] dark:bg-[#1C1C1E] p-1 rounded-full border border-black/[0.04] dark:border-white/[0.06]">
+          {/* Center Slot: Athletic Pill Segmented Tabs (Desktop) */}
+          <nav className="hidden lg:flex items-center gap-1.5 bg-[#13151D] p-1.5 rounded-full border border-white/[0.06]">
             <button
               onClick={() => onSelectTab('dashboard')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'dashboard'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-[#A1FF00] shadow-sm'
-                  : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>Hoy & Anillos</span>
+              <span>Hoy</span>
             </button>
 
             <button
               onClick={() => onSelectTab('planner')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'planner'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-[#A1FF00] shadow-sm'
-                  : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Calendar className="w-3.5 h-3.5" />
@@ -106,34 +115,34 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <button
               onClick={() => onSelectTab('monthly_diets')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'monthly_diets'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-[#A1FF00] shadow-sm'
-                  : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <FolderArchive className="w-3.5 h-3.5" />
-              <span>Dietas por Mes</span>
+              <span>Dietas Mes</span>
             </button>
 
             <button
               onClick={() => onSelectTab('supermarket')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'supermarket'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-[#A1FF00] shadow-sm'
-                  : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <ShoppingCart className="w-3.5 h-3.5" />
-              <span>Despensa Súper</span>
+              <span>Súper</span>
             </button>
 
             <button
               onClick={() => onSelectTab('workouts')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold transition-all cursor-pointer ${
+              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'workouts'
-                  ? 'bg-white dark:bg-[#2C2C2E] text-[#1C1C1E] dark:text-[#A1FF00] shadow-sm'
-                  : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
               <Zap className="w-3.5 h-3.5" />
@@ -141,14 +150,22 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           </nav>
 
-          {/* Right Slot: Quick Scanner, Report, Theme Switcher & Quick Workout */}
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Right Slot: Streak Trophy, Scanner, Report, Theme & Add CTA */}
+          <div className="flex items-center gap-2">
             
+            {/* Athletic Trophy Badge */}
+            <div 
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-[#161822] border border-white/10 text-amber-400 cursor-pointer"
+              title="Racha activa de hábitos"
+            >
+              <Trophy className="w-4 h-4" />
+            </div>
+
             {onOpenBarcodeScanner && (
               <button
                 onClick={onOpenBarcodeScanner}
-                title="Escanear Código de Barras (HEB vs Costco)"
-                className="p-2 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#1C1C1E] dark:hover:bg-[#2C2C2E] border border-black/[0.04] dark:border-white/[0.08] text-[#1C1C1E] dark:text-[#A1FF00] transition-colors cursor-pointer"
+                title="Escanear Código de Barras o Foto (Costco vs HEB vs Walmart)"
+                className="p-2 rounded-full bg-[#161822] hover:bg-[#1E2230] border border-white/5 text-white hover:text-[#CCFF00] transition-colors cursor-pointer"
               >
                 <ScanLine className="w-4 h-4" />
               </button>
@@ -158,7 +175,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenWeeklyReport}
                 title="Generar Reporte Semanal en PDF o Notas"
-                className="p-2 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#1C1C1E] dark:hover:bg-[#2C2C2E] border border-black/[0.04] dark:border-white/[0.08] text-[#1C1C1E] dark:text-[#007AFF] transition-colors cursor-pointer"
+                className="p-2 rounded-full bg-[#161822] hover:bg-[#1E2230] border border-white/5 text-white hover:text-sky-400 transition-colors cursor-pointer"
               >
                 <FileText className="w-4 h-4" />
               </button>
@@ -168,19 +185,19 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               onClick={onToggleTheme}
               title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
-              className="p-2 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#1C1C1E] dark:hover:bg-[#2C2C2E] border border-black/[0.04] dark:border-white/[0.08] text-[#1C1C1E] dark:text-[#F5F5F7] transition-colors cursor-pointer"
+              className="p-2 rounded-full bg-[#161822] hover:bg-[#1E2230] border border-white/5 text-[#8E92A4] hover:text-white transition-colors cursor-pointer"
             >
               {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-[#FFD60A]" />
+                <Sun className="w-4 h-4 text-amber-400" />
               ) : (
-                <Moon className="w-4 h-4 text-[#8E8E93]" />
+                <Moon className="w-4 h-4 text-[#8E92A4]" />
               )}
             </button>
 
-            {/* Quick Record Workout CTA */}
+            {/* Quick Record Workout CTA (Solid Matte Lime) */}
             <button
               onClick={onOpenQuickWorkout}
-              className="flex items-center gap-1 px-3 py-1.5 text-[12px] font-bold text-black bg-[#A1FF00] hover:bg-[#8FE000] active:scale-95 transition-all rounded-full shadow-sm whitespace-nowrap cursor-pointer"
+              className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold text-black bg-[#CCFF00] hover:bg-[#bbf000] active:scale-95 transition-all rounded-full shadow-sm whitespace-nowrap cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span className="hidden sm:inline">Entreno</span>
@@ -190,56 +207,43 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </header>
 
-      {/* Floating Bottom iOS Tab Bar (iPhone thumb-zone with Apple frosted glass) */}
-      <div className="fixed bottom-3.5 left-0 right-0 z-50 px-3 flex justify-center pointer-events-none md:hidden pb-safe">
-        <nav className="pointer-events-auto bg-[#FFFFFF]/85 dark:bg-[#1C1C1E]/85 backdrop-blur-2xl border border-black/[0.06] dark:border-white/[0.1] rounded-full px-2.5 py-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.6)] flex items-center gap-1 max-w-sm w-full justify-around">
+      {/* Floating Athletic Bottom Dock */}
+      <div className="fixed bottom-3.5 left-0 right-0 z-50 px-3 flex justify-center pointer-events-none lg:hidden pb-safe">
+        <nav className="pointer-events-auto bg-[#13151D]/95 backdrop-blur-xl border border-white/10 rounded-full px-4 py-1.5 shadow-2xl flex items-center max-w-sm w-full justify-between">
           
           {/* Tab 1: Inicio */}
           <button
             onClick={() => onSelectTab('dashboard')}
             className={`flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-all cursor-pointer ${
               currentTab === 'dashboard'
-                ? 'text-[#007AFF] dark:text-[#A1FF00] font-bold'
-                : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                ? 'text-white font-bold'
+                : 'text-[#6F7485] hover:text-white'
             }`}
           >
             <Home className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[9px] font-medium mt-0.5">Inicio</span>
+            <span className="text-[9px] font-semibold mt-0.5">Inicio</span>
           </button>
 
-          {/* Tab 2: Dieta */}
+          {/* Tab 2: Dieta Semanal */}
           <button
             onClick={() => onSelectTab('planner')}
             className={`flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-all cursor-pointer ${
               currentTab === 'planner'
-                ? 'text-[#007AFF] dark:text-[#A1FF00] font-bold'
-                : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                ? 'text-white font-bold'
+                : 'text-[#6F7485] hover:text-white'
             }`}
           >
             <UtensilsCrossed className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[9px] font-medium mt-0.5">Semana</span>
+            <span className="text-[9px] font-semibold mt-0.5">Dieta</span>
           </button>
 
-          {/* Tab 3: Dietas Mensuales */}
-          <button
-            onClick={() => onSelectTab('monthly_diets')}
-            className={`flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-all cursor-pointer ${
-              currentTab === 'monthly_diets'
-                ? 'text-[#007AFF] dark:text-[#A1FF00] font-bold'
-                : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
-            }`}
-          >
-            <FolderArchive className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[9px] font-medium mt-0.5">Dietas</span>
-          </button>
-
-          {/* Center Floating Action Button (Apple Neon Green Quick Add) */}
+          {/* Center Floating Action Button (Solid Matte Lime) */}
           <button
             onClick={onOpenQuickWorkout}
             title="Registrar Sesión"
-            className="w-10 h-10 -mt-2.5 rounded-full bg-[#A1FF00] hover:bg-[#8FE000] text-black flex items-center justify-center shadow-[0_4px_16px_rgba(161,255,0,0.35)] active:scale-95 transition-transform cursor-pointer shrink-0"
+            className="w-11 h-11 -mt-3.5 rounded-full bg-[#CCFF00] hover:bg-[#bbf000] text-black flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border-2 border-[#0B0C10]"
           >
-            <Plus className="w-5 h-5 stroke-[3]" />
+            <Plus className="w-6 h-6 stroke-[3]" />
           </button>
 
           {/* Tab 4: Súper */}
@@ -247,12 +251,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onSelectTab('supermarket')}
             className={`flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-all cursor-pointer ${
               currentTab === 'supermarket'
-                ? 'text-[#007AFF] dark:text-[#A1FF00] font-bold'
-                : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                ? 'text-white font-bold'
+                : 'text-[#6F7485] hover:text-white'
             }`}
           >
             <ShoppingCart className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[9px] font-medium mt-0.5">Súper</span>
+            <span className="text-[9px] font-semibold mt-0.5">Súper</span>
           </button>
 
           {/* Tab 5: Entrenamientos */}
@@ -260,12 +264,12 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => onSelectTab('workouts')}
             className={`flex flex-col items-center justify-center min-w-[44px] min-h-[44px] transition-all cursor-pointer ${
               currentTab === 'workouts'
-                ? 'text-[#007AFF] dark:text-[#A1FF00] font-bold'
-                : 'text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
+                ? 'text-white font-bold'
+                : 'text-[#6F7485] hover:text-white'
             }`}
           >
             <Zap className="w-5 h-5 stroke-[2.2]" />
-            <span className="text-[9px] font-medium mt-0.5">Entrenos</span>
+            <span className="text-[9px] font-semibold mt-0.5">Entrenos</span>
           </button>
 
         </nav>

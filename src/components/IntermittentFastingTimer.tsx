@@ -193,9 +193,9 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
               <h3 className="text-[16px] font-bold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight">
                 Ayuno Intermitente
               </h3>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
+              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                 isActive 
-                  ? 'bg-[#A1FF00]/20 text-black dark:text-[#A1FF00]' 
+                  ? 'bg-[#CCFF00] text-black shadow-sm' 
                   : 'bg-[#8E8E93]/20 text-[#8E8E93]'
               }`}>
                 {isActive ? 'Ayuno Activo' : 'Ventana de Comida'}
@@ -258,7 +258,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
             <defs>
               <linearGradient id="fastingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#FF9500" />
-                <stop offset="70%" stopColor="#A1FF00" />
+                <stop offset="70%" stopColor="#CCFF00" />
                 <stop offset="100%" stopColor="#00F0FF" />
               </linearGradient>
             </defs>
@@ -274,7 +274,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
                 <span className="text-[10px] text-[#8E8E93] font-mono mt-0.5">
                   de {targetHours}h meta
                 </span>
-                <span className="text-[11px] font-bold text-[#A1FF00] font-mono mt-1">
+                <span className="text-[11px] font-bold text-white font-mono mt-1">
                   {progressPercentage}%
                 </span>
               </>
@@ -297,7 +297,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
           
           <div className="p-3.5 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]/60 border border-black/[0.04] dark:border-white/[0.06] space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-[#A1FF00]">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
                 {isActive ? currentStage.badge : 'Protocolo Seleccionado'}
               </span>
               <span className="text-[10px] font-mono text-[#8E8E93]">
@@ -310,7 +310,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
             </div>
 
             <h4 className="text-[14px] font-bold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight flex items-center gap-1.5">
-              <Activity className="w-4 h-4 text-[#A1FF00]" />
+              <Activity className="w-4 h-4 text-slate-300" />
               <span>{isActive ? currentStage.title : `Plan de Ayuno ${protocol}`}</span>
             </h4>
             
@@ -323,7 +323,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
             {isActive && (
               <div className="pt-2 mt-1 border-t border-black/[0.04] dark:border-white/[0.06] flex items-center justify-between text-[11px]">
                 <span className="text-[#8E8E93]">Tasa de oxidación lipídica:</span>
-                <span className="font-bold text-[#A1FF00] font-mono">{currentStage.fatBurnRate}</span>
+                <span className="font-bold text-white font-mono">{currentStage.fatBurnRate}</span>
               </div>
             )}
           </div>
@@ -345,7 +345,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
               <>
                 <button
                   onClick={() => handleStartFast(0)}
-                  className="flex-1 py-2 px-3 text-xs font-bold text-black bg-[#A1FF00] hover:bg-[#8FE000] active:scale-95 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="flex-1 py-2 px-3 text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] active:scale-95 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-black" />
                   <span>Iniciar Ayuno Ahora</span>
@@ -389,7 +389,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
           <div className="bg-white dark:bg-[#1C1C1E] rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl border border-black/10 dark:border-white/10">
             <div className="flex items-center justify-between">
               <h4 className="text-[16px] font-bold text-[#1C1C1E] dark:text-white flex items-center gap-2">
-                <Award className="w-4 h-4 text-[#A1FF00]" />
+                <Award className="w-4 h-4 text-slate-300" />
                 <span>Historial de Ayunos Registrados</span>
               </h4>
               <button
@@ -412,7 +412,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
                         {s.protocol}
                       </span>
                       {s.completed ? (
-                        <span className="text-[9px] font-bold text-emerald-600 dark:text-[#A1FF00] bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                        <span className="text-[9px] font-bold text-white bg-white/10 px-1.5 py-0.5 rounded-full">
                           Completado
                         </span>
                       ) : (

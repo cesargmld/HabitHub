@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ScanLine, 
   X, 
@@ -10,9 +10,18 @@ import {
   AlertCircle,
   Package,
   Layers,
-  ArrowRight
+  ArrowRight,
+  Camera,
+  CameraOff,
+  Upload,
+  RotateCcw,
+  RefreshCw,
+  ShoppingBag,
+  DollarSign
 } from 'lucide-react';
-import { SupermarketProduct } from '../types';
+import { ProductComparisonResult } from '../types';
+import { fileToBase64 } from '../utils/fileParsers';
+import { VERIFIED_STAPLES_MAP } from '../utils/pricingEngine';
 
 export interface BarcodeComparisonItem {
   barcode: string;
@@ -34,6 +43,13 @@ export interface BarcodeComparisonItem {
     brand: string;
     pros: string;
   };
+  walmart?: {
+    packageSize: string;
+    weightG: number;
+    priceMxn: number;
+    unitPricePerKgMxn: number;
+    brand: string;
+  };
   winner: 'costco' | 'heb' | 'tie';
   savingPercentage: number;
   annualSavingMxn: number;
@@ -46,32 +62,39 @@ export const BARCODE_DATABASE: BarcodeComparisonItem[] = [
     name: 'Pechuga de Pollo Sin Piel Deshuesada',
     category: 'Proteínas',
     heb: {
-      packageSize: 'Bandeja fresca 800g',
-      weightG: 800,
-      priceMxn: 124.00,
-      unitPricePerKgMxn: 155.00,
+      packageSize: 'Charola fresca 900g',
+      weightG: 900,
+      priceMxn: 148.50,
+      unitPricePerKgMxn: 165.00,
       brand: 'H-E-B Natural',
-      pros: 'Consumo inmediato, sin congelar, porción pequeña'
+      pros: 'Consumo inmediato, sin congelar, porción justa'
     },
     costco: {
-      packageSize: 'Bolsa sellada 2.5kg (congelada individual)',
+      packageSize: 'Bolsa sellada 2.5kg al vacío (congelada individual)',
       weightG: 2500,
-      priceMxn: 279.00,
-      unitPricePerKgMxn: 111.60,
+      priceMxn: 329.00,
+      unitPricePerKgMxn: 131.60,
       brand: 'Kirkland Signature',
-      pros: 'Viene en porciones individuales al vacío, máxima frescura'
+      pros: '6 porciones individuales al vacío, máxima frescura'
+    },
+    walmart: {
+      packageSize: 'Bandeja fresca 1kg',
+      weightG: 1000,
+      priceMxn: 156.00,
+      unitPricePerKgMxn: 156.00,
+      brand: 'Pilgrim / SuKarne'
     },
     winner: 'costco',
-    savingPercentage: 28.0,
-    annualSavingMxn: 2256,
-    recommendation: 'Costco es el claro ganador. Ahorras $43.40 MXN por cada kilo. Para un atleta que consume 1kg semanal, son más de $2,200 MXN al año.'
+    savingPercentage: 20.2,
+    annualSavingMxn: 1736,
+    recommendation: 'Costco es el ganador contundente por kilo ($131.60 vs $165.00 en HEB). Ahorras $33.40 MXN por cada kilo si tienes espacio en congelador.'
   },
   {
     barcode: '7501020556102',
     name: 'Claras de Huevo Líquidas Pasteurizadas',
     category: 'Proteínas / Desayuno',
     heb: {
-      packageSize: 'Bote individual 1kg',
+      packageSize: 'Bote individual 1L (1000g)',
       weightG: 1000,
       priceMxn: 62.00,
       unitPricePerKgMxn: 62.00,
@@ -84,137 +107,133 @@ export const BARCODE_DATABASE: BarcodeComparisonItem[] = [
       priceMxn: 198.00,
       unitPricePerKgMxn: 49.50,
       brand: 'San Juan',
-      pros: 'Misma marca de primera, caja refrigerada sellada'
+      pros: 'Misma marca San Juan en pack de 4 refrigerado'
+    },
+    walmart: {
+      packageSize: 'Bote individual 1L',
+      weightG: 1000,
+      priceMxn: 64.00,
+      unitPricePerKgMxn: 64.00,
+      brand: 'San Juan'
     },
     winner: 'costco',
-    savingPercentage: 20.2,
+    savingPercentage: 20.1,
     annualSavingMxn: 1300,
-    recommendation: 'Costco ahorra $12.50 MXN por litro. Como tienen caducidad de más de 45 días en frío, rinde perfecto para el mes sin riesgo de merma.'
+    recommendation: 'Costco ahorra $12.50 MXN por litro. Como tienen caducidad de más de 45 días refrigeradas sin abrir, rinde perfecto para el mes sin riesgo de descomposición.'
   },
   {
     barcode: '7501030491823',
     name: 'Atún en Agua de Lomo Sólido',
     category: 'Proteínas / Alacena',
     heb: {
-      packageSize: 'Lata individual 140g',
-      weightG: 140,
-      priceMxn: 23.50,
-      unitPricePerKgMxn: 167.85,
+      packageSize: 'Lata individual 130g drenado',
+      weightG: 130,
+      priceMxn: 21.50,
+      unitPricePerKgMxn: 165.38,
       brand: 'Dolores Premium',
-      pros: 'Compra exacta para un solo día'
+      pros: 'Compra para una sola comida'
     },
     costco: {
-      packageSize: 'Pack de 8 latas x 140g (1.12kg)',
-      weightG: 1120,
-      priceMxn: 148.00,
-      unitPricePerKgMxn: 132.14,
-      brand: 'Dolores Premium',
-      pros: 'Alacena no perecedera con caducidad de 3 años'
+      packageSize: 'Pack de 8 latas x 198g Kirkland (1.58kg)',
+      weightG: 1584,
+      priceMxn: 269.00,
+      unitPricePerKgMxn: 169.82,
+      brand: 'Kirkland Signature',
+      pros: 'Lomo sólido de alta densidad de proteína'
+    },
+    walmart: {
+      packageSize: 'Pack 4 latas Dolores 130g',
+      weightG: 520,
+      priceMxn: 82.00,
+      unitPricePerKgMxn: 157.69,
+      brand: 'Dolores'
     },
     winner: 'costco',
-    savingPercentage: 21.3,
-    annualSavingMxn: 740,
-    recommendation: 'El atún no caduca pronto. El pack de Costco te regala prácticamente 2 latas gratis respecto a comprarlas sueltas en H-E-B.'
+    savingPercentage: 18.5,
+    annualSavingMxn: 650,
+    recommendation: 'En latas no perecederas, comprar el lote en Costco rinde más de 2 meses de cenas rápidas.'
   },
   {
     barcode: '7501008012904',
     name: 'Avena Entera en Hojuelas',
-    category: 'Carbohidratos Complejos',
+    category: 'Carbohidratos',
     heb: {
-      packageSize: 'Bolsa 475g',
-      weightG: 475,
-      priceMxn: 34.00,
-      unitPricePerKgMxn: 71.58,
+      packageSize: 'Bolsa 800g',
+      weightG: 800,
+      priceMxn: 39.00,
+      unitPricePerKgMxn: 48.75,
       brand: 'Quaker Old Fashioned',
-      pros: 'Fácil de guardar'
+      pros: 'Porción menudeo'
     },
     costco: {
-      packageSize: 'Bolsa grande 1.8kg',
-      weightG: 1800,
-      priceMxn: 89.00,
-      unitPricePerKgMxn: 49.44,
-      brand: 'Quaker Old Fashioned',
-      pros: 'Rinde 45 porciones de 40g de avena'
+      packageSize: 'Bolsa grande 2kg',
+      weightG: 2000,
+      priceMxn: 69.00,
+      unitPricePerKgMxn: 34.50,
+      brand: 'Quaker / Kirkland',
+      pros: 'Rinde 50 desayunos de 40g de avena'
+    },
+    walmart: {
+      packageSize: 'Bolsa 1kg Great Value',
+      weightG: 1000,
+      priceMxn: 36.00,
+      unitPricePerKgMxn: 36.00,
+      brand: 'Great Value'
     },
     winner: 'costco',
-    savingPercentage: 30.9,
-    annualSavingMxn: 680,
-    recommendation: 'En granos secos la diferencia es abismal: 31% más barata en Costco. Es el carbohidrato con mayor densidad nutricional por peso gastado.'
+    savingPercentage: 29.2,
+    annualSavingMxn: 520,
+    recommendation: 'En granos secos la diferencia es enorme: 29% más barata en Costco. Es no perecedera y dura 1 año en alacena.'
   },
   {
     barcode: '7501980004512',
-    name: 'Aguacate Hass de Temporada',
+    name: 'Aguacate Hass Fresco',
     category: 'Grasas Saludables',
     heb: {
-      packageSize: 'Malla 1kg (4-5 piezas en punto de maduración)',
+      packageSize: 'Por kilo fresco en punto de maduración',
       weightG: 1000,
-      priceMxn: 54.00,
-      unitPricePerKgMxn: 54.00,
-      brand: 'H-E-B Frescos Selección',
-      pros: 'Puedes escoger el grado de madurez exacto para hoy o mañana'
+      priceMxn: 76.00,
+      unitPricePerKgMxn: 76.00,
+      brand: 'H-E-B Selección',
+      pros: 'Puedes escoger los aguacates en el punto exacto para hoy o mañana'
     },
     costco: {
-      packageSize: 'Bolsa grande 2.2kg (8-10 piezas verdes)',
-      weightG: 2200,
-      priceMxn: 132.00,
-      unitPricePerKgMxn: 60.00,
-      brand: 'Hass Exportación',
-      pros: 'Piezas calibre grande'
+      packageSize: 'Malla con 6 piezas grandes (~1.2kg)',
+      weightG: 1200,
+      priceMxn: 98.00,
+      unitPricePerKgMxn: 81.66,
+      brand: 'Costco Selección',
+      pros: 'Aguacates de buen calibre'
     },
     winner: 'heb',
-    savingPercentage: 10.0,
-    annualSavingMxn: 416,
-    recommendation: 'Gana H-E-B por precio y nula merma. En Costco maduran todos al mismo tiempo y se suele desperdiciar el 30% si no cocinas para una familia grande.'
-  },
-  {
-    barcode: '7501438901235',
-    name: 'Proteína Whey Isolate 100%',
-    category: 'Suplementos',
-    heb: {
-      packageSize: 'Bote 900g (30 servicios)',
-      weightG: 900,
-      priceMxn: 799.00,
-      unitPricePerKgMxn: 887.77,
-      brand: 'Optimum Nutrition / Sascha',
-      pros: 'Menor desembolso inicial de contado'
-    },
-    costco: {
-      packageSize: 'Bolsa 2.4kg (80 servicios)',
-      weightG: 2400,
-      priceMxn: 1349.00,
-      unitPricePerKgMxn: 562.08,
-      brand: 'Kirkland Signature / Optimum Nutrition',
-      pros: 'Costo por servicio: $16.80 MXN vs $26.60 MXN'
-    },
-    winner: 'costco',
-    savingPercentage: 36.7,
-    annualSavingMxn: 3560,
-    recommendation: 'Costco arrasa con 36.7% de ahorro. Pagas $16.80 MXN por scoop en lugar de $26.60 en H-E-B. Al año son más de $3,500 MXN en el bolsillo.'
+    savingPercentage: 7.0,
+    annualSavingMxn: 320,
+    recommendation: 'H-E-B es el ganador en aguacate. En Costco todos vienen duros y maduran al mismo tiempo, lo que causa merma si vives solo o con pareja.'
   },
   {
     barcode: '7501112233445',
-    name: 'Crema de Cacahuate 100% Natural Sin Azúcar',
-    category: 'Grasas Saludables',
+    name: 'Filete de Salmón del Atlántico',
+    category: 'Proteínas',
     heb: {
-      packageSize: 'Frasco 450g',
-      weightG: 450,
-      priceMxn: 78.00,
-      unitPricePerKgMxn: 173.33,
-      brand: 'Aladino Natural / HEB Organics',
-      pros: 'Frasco de vidrio mediano'
+      packageSize: 'Charola fresca por kg',
+      weightG: 1000,
+      priceMxn: 410.00,
+      unitPricePerKgMxn: 410.00,
+      brand: 'H-E-B Pescadería',
+      pros: 'Fresco para cocinar de inmediato'
     },
     costco: {
-      packageSize: 'Pack de 2 botes x 1kg (2kg total)',
-      weightG: 2000,
-      priceMxn: 239.00,
-      unitPricePerKgMxn: 119.50,
-      brand: 'Kirkland Signature Orgánica',
-      pros: 'Solo cacahuate y sal marina de Valencia'
+      packageSize: 'Bolsa 1.36kg filetes individuales congelados',
+      weightG: 1360,
+      priceMxn: 479.00,
+      unitPricePerKgMxn: 352.20,
+      brand: 'Kirkland Signature',
+      pros: 'Porcionado individualmente en bolsas herméticas'
     },
     winner: 'costco',
-    savingPercentage: 31.0,
-    annualSavingMxn: 920,
-    recommendation: 'Kirkland en Costco te ahorra 31%. Dura meses en el refrigerador sin echarse a perder. Excelente densidad calórica para corredores y atletas.'
+    savingPercentage: 14.1,
+    annualSavingMxn: 1200,
+    recommendation: 'Costco ahorra $57.80 MXN por kilo en salmón. Vienen en porciones individuales congeladas para descongelar solo lo que vas a comer.'
   }
 ];
 
@@ -231,235 +250,425 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<BarcodeComparisonItem | null>(BARCODE_DATABASE[0]);
-  const [isScanningSimulation, setIsScanningSimulation] = useState(false);
+  const [aiResult, setAiResult] = useState<ProductComparisonResult | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isAnalyzingAi, setIsAnalyzingAi] = useState(false);
   const [scanMessage, setScanMessage] = useState<string | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
 
-  if (!isOpen) return null;
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const filteredItems = BARCODE_DATABASE.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.barcode.includes(searchTerm) ||
+  useEffect(() => {
+    if (!isOpen) {
+      stopCamera();
+    }
+  }, [isOpen]);
+
+  const startCamera = async () => {
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }
+      });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play();
+        setIsCameraActive(true);
+        setScanMessage('Cámara activa. Enfoca el producto o toma una foto para analizar.');
+      }
+    } catch (err: any) {
+      console.warn('Camera access denied or unavailable:', err);
+      setCameraError('No se pudo abrir la cámara. Puedes subir una foto de tu galería o escribir el producto.');
+      setIsCameraActive(false);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
+
+  const queryAiForProduct = async (params: { imageBase64?: string; barcode?: string; productName?: string }) => {
+    setIsAnalyzingAi(true);
+    setScanMessage('Comparando precios en tiempo real (Costco vs H-E-B vs Walmart)...');
+    try {
+      const res = await fetch('/api/identify-product', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(params)
+      });
+      const data: ProductComparisonResult = await res.json();
+      if (!res.ok) throw new Error((data as any).error || 'Error al cotizar producto');
+      setAiResult(data);
+      setSelectedItem(null);
+      setScanMessage(`¡Comparación completada para: ${data.name}! Ganador: ${data.winner.toUpperCase()}`);
+    } catch (err: any) {
+      setScanMessage(err.message || 'No se pudo identificar el producto');
+    } finally {
+      setIsAnalyzingAi(false);
+    }
+  };
+
+  const handleCapturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      queryAiForProduct({ imageBase64: dataUrl });
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const base64 = await fileToBase64(file);
+      queryAiForProduct({ imageBase64: base64 });
+    } catch {
+      setScanMessage('Error al cargar la imagen del producto.');
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!searchTerm.trim()) return;
+
+    // Check if in local staples database
+    const local = BARCODE_DATABASE.find(item => 
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (local) {
+      setSelectedItem(local);
+      setAiResult(null);
+      setScanMessage(`Producto encontrado en catálogo verificado: ${local.name}`);
+    } else {
+      queryAiForProduct({ productName: searchTerm.trim() });
+    }
+  };
+
+  const filteredStaples = BARCODE_DATABASE.filter(item => 
+    !searchTerm || 
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     item.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const simulateCameraScan = (item: BarcodeComparisonItem) => {
-    setIsScanningSimulation(true);
-    setScanMessage(`Escaneando código de barras [${item.barcode}]...`);
-    setTimeout(() => {
-      setSelectedItem(item);
-      setIsScanningSimulation(false);
-      setScanMessage(`¡Producto detectado: ${item.name}!`);
-      setTimeout(() => setScanMessage(null), 3000);
-    }, 700);
-  };
+  if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-      <div className="bg-[#FFFFFF] dark:bg-[#1C1C1E] border border-black/[0.08] dark:border-white/[0.1] rounded-[28px] max-w-xl w-full p-5 sm:p-6 shadow-2xl space-y-4 my-auto transition-colors">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white dark:bg-[#12131A] border border-slate-200 dark:border-white/10 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden transition-colors">
         
-        {/* Top Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-[#A1FF00]/15 dark:bg-[#A1FF00]/20 flex items-center justify-center text-black dark:text-[#A1FF00]">
-              <ScanLine className="w-5 h-5 stroke-[2.5]" />
-            </div>
+        {/* Modal Top Bar */}
+        <div className="p-4 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ScanLine className="w-5 h-5 text-lime-500" />
             <div>
-              <h3 className="text-[17px] font-bold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight">
-                Escáner & Comparador de Súper
+              <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                Comparador de Precios (Costco vs. H-E-B vs. Walmart)
               </h3>
-              <p className="text-[11px] text-[#8E8E93]">
-                H-E-B (paquete individual) vs. Costco (caja volumen)
+              <p className="text-[11px] text-slate-400">
+                Escribe un producto, toma una foto o selecciona un básico fitness.
               </p>
             </div>
           </div>
 
           <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-[#F2F2F7] hover:bg-[#E5E5EA] dark:bg-[#2C2C2E] dark:hover:bg-[#3A3A3C] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white transition-colors cursor-pointer"
+            onClick={() => {
+              stopCamera();
+              onClose();
+            }}
+            className="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg cursor-pointer"
           >
-            <X className="w-4 h-4" />
+            <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Optical Scanner Viewport Simulation */}
-        <div className="relative bg-black rounded-2xl p-4 overflow-hidden border border-white/10 text-white flex flex-col items-center justify-center min-h-[140px]">
-          {/* Laser line animation */}
-          <div className="absolute inset-x-8 top-1/2 -translate-y-1/2 h-0.5 bg-gradient-to-r from-transparent via-[#FA114F] to-transparent shadow-[0_0_12px_#FA114F] animate-pulse" />
+        {/* Modal Body */}
+        <div className="p-4 overflow-y-auto space-y-4 flex-1 text-xs">
           
-          {/* Corner brackets */}
-          <div className="absolute top-3 left-3 w-4 h-4 border-t-2 border-l-2 border-[#A1FF00]" />
-          <div className="absolute top-3 right-3 w-4 h-4 border-t-2 border-r-2 border-[#A1FF00]" />
-          <div className="absolute bottom-3 left-3 w-4 h-4 border-b-2 border-l-2 border-[#A1FF00]" />
-          <div className="absolute bottom-3 right-3 w-4 h-4 border-b-2 border-r-2 border-[#A1FF00]" />
-
-          <ScanLine className="w-7 h-7 text-[#A1FF00] mb-2 animate-bounce opacity-80" />
-          <span className="text-[12px] font-mono tracking-wider uppercase text-slate-300">
-            {isScanningSimulation ? 'Leyendo código láser...' : 'Enfoca código de barras o busca abajo'}
-          </span>
-          {selectedItem && (
-            <span className="text-[10px] text-[#A1FF00] font-mono mt-1">
-              Último escaneo: {selectedItem.barcode}
-            </span>
-          )}
-        </div>
-
-        {scanMessage && (
-          <div className="p-2.5 rounded-xl bg-[#A1FF00]/15 border border-[#A1FF00]/30 text-xs font-semibold text-[#1C1C1E] dark:text-[#A1FF00] text-center">
-            {scanMessage}
-          </div>
-        )}
-
-        {/* Quick Barcode / Product Search */}
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93]" />
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Buscar por código de barras o producto (ej: Pechuga, Huevos, Avena...)"
-            className="w-full pl-9 pr-4 py-2 text-xs bg-[#F2F2F7] dark:bg-[#2C2C2E] border border-black/[0.04] dark:border-white/[0.08] rounded-full text-[#1C1C1E] dark:text-white placeholder-[#8E8E93] focus:outline-none focus:ring-2 focus:ring-[#A1FF00]"
-          />
-        </div>
-
-        {/* Quick Chips for Common Fitness Supermarket Items */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-          {BARCODE_DATABASE.map(item => (
+          {/* Search & Actions Bar */}
+          <form onSubmit={handleSearchSubmit} className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Buscar producto (ej: Pollo, Claras, Avena, Salmón, Atún...)"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 dark:bg-[#181B26] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-xs"
+              />
+            </div>
             <button
-              key={item.barcode}
-              onClick={() => simulateCameraScan(item)}
-              className={`px-2.5 py-1 text-[11px] font-semibold rounded-full whitespace-nowrap transition-all cursor-pointer ${
-                selectedItem?.barcode === item.barcode
-                  ? 'bg-[#1C1C1E] text-white dark:bg-[#A1FF00] dark:text-black shadow-sm'
-                  : 'bg-[#F2F2F7] dark:bg-[#2C2C2E] text-[#8E8E93] hover:text-[#1C1C1E] dark:hover:text-white'
-              }`}
+              type="submit"
+              className="px-3.5 py-2 bg-[#CCFF00] hover:bg-[#bbf000] text-black font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap"
             >
-              {item.name.split(' ')[0]} {item.name.split(' ')[1] || ''}
+              Comparar
             </button>
-          ))}
-        </div>
+          </form>
 
-        {/* Comparative Result Breakdown Card */}
-        {selectedItem && (
-          <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#007AFF]">
-                  {selectedItem.category} · EAN {selectedItem.barcode}
-                </span>
-                <h4 className="text-[15px] font-bold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight">
-                  {selectedItem.name}
-                </h4>
-              </div>
-
-              <div className="text-right">
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-[#A1FF00]/20 text-[#1C1C1E] dark:text-[#A1FF00]">
-                  <TrendingDown className="w-3.5 h-3.5" />
-                  <span>Ahorras {selectedItem.savingPercentage}%</span>
-                </span>
-              </div>
-            </div>
-
-            {/* Side-by-side: HEB vs Costco */}
-            <div className="grid grid-cols-2 gap-2.5">
-              
-              {/* Option 1: H-E-B */}
-              <div className={`p-3 rounded-2xl border transition-all ${
-                selectedItem.winner === 'heb'
-                  ? 'bg-emerald-500/10 border-emerald-500/30'
-                  : 'bg-[#F2F2F7] dark:bg-[#2C2C2E]/60 border-black/[0.04] dark:border-white/[0.06]'
-              }`}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-bold text-[#FA114F] uppercase tracking-wide">
-                    H-E-B México
-                  </span>
-                  {selectedItem.winner === 'heb' && (
-                    <span className="text-[9px] font-bold uppercase bg-emerald-500 text-white px-1.5 py-0.5 rounded-full">
-                      Recomendado
-                    </span>
-                  )}
-                </div>
-                <div className="text-[18px] font-extrabold text-[#1C1C1E] dark:text-[#F5F5F7] font-mono tabular-nums leading-tight">
-                  ${selectedItem.heb.priceMxn.toFixed(2)}
-                  <span className="text-[10px] font-normal text-[#8E8E93] ml-1">MXN</span>
-                </div>
-                <p className="text-[10px] text-[#8E8E93] mt-0.5">{selectedItem.heb.packageSize}</p>
-                <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] text-[10px] font-mono">
-                  <span className="text-[#8E8E93]">Unitario: </span>
-                  <span className="font-bold text-[#1C1C1E] dark:text-white">
-                    ${selectedItem.heb.unitPricePerKgMxn.toFixed(2)}/kg
-                  </span>
-                </div>
-                <p className="text-[10px] text-[#8E8E93] mt-1 line-clamp-2">
-                  {selectedItem.heb.pros}
-                </p>
-                
-                {onSelectProductForCart && (
-                  <button
-                    onClick={() => onSelectProductForCart(selectedItem.name, 'heb', selectedItem.heb.priceMxn)}
-                    className="w-full mt-2 py-1.5 px-2 bg-white dark:bg-[#3A3A3C] hover:bg-[#E5E5EA] text-[#1C1C1E] dark:text-white text-[10px] font-bold rounded-xl border border-black/5 dark:border-white/10 transition-colors cursor-pointer"
-                  >
-                    Elegir H-E-B
-                  </button>
-                )}
-              </div>
-
-              {/* Option 2: Costco */}
-              <div className={`p-3 rounded-2xl border transition-all ${
-                selectedItem.winner === 'costco'
-                  ? 'bg-[#A1FF00]/10 border-[#A1FF00]/30'
-                  : 'bg-[#F2F2F7] dark:bg-[#2C2C2E]/60 border-black/[0.04] dark:border-white/[0.06]'
-              }`}>
-                <div className="flex items-center justify-between mb-1.5">
-                  <span className="text-[11px] font-bold text-[#007AFF] uppercase tracking-wide">
-                    Costco México
-                  </span>
-                  {selectedItem.winner === 'costco' && (
-                    <span className="text-[9px] font-bold uppercase bg-[#A1FF00] text-black px-1.5 py-0.5 rounded-full">
-                      Recomendado
-                    </span>
-                  )}
-                </div>
-                <div className="text-[18px] font-extrabold text-[#1C1C1E] dark:text-[#F5F5F7] font-mono tabular-nums leading-tight">
-                  ${selectedItem.costco.priceMxn.toFixed(2)}
-                  <span className="text-[10px] font-normal text-[#8E8E93] ml-1">MXN</span>
-                </div>
-                <p className="text-[10px] text-[#8E8E93] mt-0.5">{selectedItem.costco.packageSize}</p>
-                <div className="mt-2 pt-2 border-t border-black/[0.04] dark:border-white/[0.06] text-[10px] font-mono">
-                  <span className="text-[#8E8E93]">Unitario: </span>
-                  <span className="font-bold text-[#A1FF00]">
-                    ${selectedItem.costco.unitPricePerKgMxn.toFixed(2)}/kg
-                  </span>
-                </div>
-                <p className="text-[10px] text-[#8E8E93] mt-1 line-clamp-2">
-                  {selectedItem.costco.pros}
-                </p>
-
-                {onSelectProductForCart && (
-                  <button
-                    onClick={() => onSelectProductForCart(selectedItem.name, 'costco', selectedItem.costco.priceMxn)}
-                    className="w-full mt-2 py-1.5 px-2 bg-[#A1FF00] hover:bg-[#8FE000] text-black text-[10px] font-bold rounded-xl transition-colors cursor-pointer"
-                  >
-                    Elegir Costco
-                  </button>
-                )}
-              </div>
-
-            </div>
-
-            {/* Smart Verdict Box */}
-            <div className="p-3 bg-[#F2F2F7] dark:bg-[#2C2C2E] rounded-2xl border border-black/[0.04] dark:border-white/[0.08] flex items-start gap-2.5">
-              <Sparkles className="w-4 h-4 text-[#A1FF00] shrink-0 mt-0.5" />
-              <div className="text-[11px] text-[#1C1C1E] dark:text-[#F5F5F7] leading-relaxed">
-                <span className="font-bold">Veredicto del Optimizador: </span>
-                {selectedItem.recommendation}
-                <span className="block font-bold text-emerald-600 dark:text-[#A1FF00] mt-1">
-                  💰 Ahorro anual proyectado para tu consumo: ${selectedItem.annualSavingMxn.toLocaleString()} MXN
-                </span>
-              </div>
-            </div>
-
+          {/* Quick Staple Shortcut Pills */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+            {[
+              '🍗 Pollo',
+              '🥚 Claras',
+              '🌾 Avena',
+              '🐟 Salmón',
+              '🥑 Aguacate',
+              '🥫 Atún'
+            ].map(tag => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => {
+                  const clean = tag.split(' ')[1];
+                  setSearchTerm(clean);
+                  const found = BARCODE_DATABASE.find(b => b.name.toLowerCase().includes(clean.toLowerCase()));
+                  if (found) {
+                    setSelectedItem(found);
+                    setAiResult(null);
+                  } else {
+                    queryAiForProduct({ productName: clean });
+                  }
+                }}
+                className="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-slate-300 font-medium whitespace-nowrap cursor-pointer transition-colors"
+              >
+                {tag}
+              </button>
+            ))}
           </div>
-        )}
+
+          {/* Camera / Photo Upload Strip */}
+          <div className="flex items-center gap-2">
+            {!isCameraActive ? (
+              <button
+                type="button"
+                onClick={startCamera}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl cursor-pointer"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Escanear con Cámara</span>
+              </button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCapturePhoto}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#CCFF00] text-black font-bold rounded-xl cursor-pointer"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Tomar Foto y Comparar</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={stopCamera}
+                  className="px-2.5 py-1.5 text-slate-400 hover:text-white"
+                >
+                  Cerrar Cámara
+                </button>
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl cursor-pointer"
+            >
+              <Upload className="w-3.5 h-3.5" />
+              <span>Subir Foto del Producto</span>
+            </button>
+            <input 
+              ref={fileInputRef} 
+              type="file" 
+              accept="image/*" 
+              className="hidden" 
+              onChange={handleFileUpload} 
+            />
+          </div>
+
+          {/* Camera Stream Viewport (When active) */}
+          {isCameraActive && (
+            <div className="relative rounded-2xl overflow-hidden bg-black aspect-video max-h-56 flex items-center justify-center">
+              <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
+              <canvas ref={canvasRef} className="hidden" />
+              <div className="absolute inset-x-8 inset-y-6 border-2 border-dashed border-[#CCFF00] rounded-xl pointer-events-none opacity-80" />
+            </div>
+          )}
+
+          {cameraError && (
+            <p className="text-amber-500 text-[11px] flex items-center gap-1">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{cameraError}</span>
+            </p>
+          )}
+
+          {scanMessage && (
+            <p className="text-lime-600 dark:text-lime-400 text-[11px] font-mono">
+              {scanMessage}
+            </p>
+          )}
+
+          {/* DISPLAY 1: VERIFIED LOCAL COMPARISON RESULT */}
+          {selectedItem && (
+            <div className="bg-slate-50 dark:bg-[#181B26] border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    {selectedItem.name}
+                  </h4>
+                  <span className="text-[11px] text-slate-400">{selectedItem.category}</span>
+                </div>
+                <span className={`px-2.5 py-1 rounded-full text-xs font-black uppercase ${
+                  selectedItem.winner === 'costco'
+                    ? 'bg-red-500 text-white'
+                    : 'bg-rose-500 text-white'
+                }`}>
+                  Ganador: {selectedItem.winner.toUpperCase()} ({selectedItem.savingPercentage}% más barato)
+                </span>
+              </div>
+
+              {/* 3-Store Side by Side */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Costco */}
+                <div className={`p-3 rounded-xl border ${
+                  selectedItem.winner === 'costco' 
+                    ? 'bg-lime-50/50 dark:bg-lime-950/20 border-lime-500/40' 
+                    : 'bg-white dark:bg-[#12131A] border-slate-200 dark:border-white/5'
+                }`}>
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-red-600">Costco México</span>
+                    {selectedItem.winner === 'costco' && <span className="text-lime-500 text-[10px]">★ Mejor Precio</span>}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{selectedItem.costco.packageSize}</p>
+                  <div className="mt-2 font-mono flex items-baseline gap-2">
+                    <span className="text-base font-extrabold text-slate-900 dark:text-white">${selectedItem.costco.priceMxn} MXN</span>
+                    <span className="text-slate-400 text-[10px]">(${selectedItem.costco.unitPricePerKgMxn.toFixed(2)}/kg)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 italic">{selectedItem.costco.pros}</p>
+                </div>
+
+                {/* H-E-B */}
+                <div className={`p-3 rounded-xl border ${
+                  selectedItem.winner === 'heb' 
+                    ? 'bg-lime-50/50 dark:bg-lime-950/20 border-lime-500/40' 
+                    : 'bg-white dark:bg-[#12131A] border-slate-200 dark:border-white/5'
+                }`}>
+                  <div className="flex justify-between items-center font-bold">
+                    <span className="text-rose-500">H-E-B México</span>
+                    {selectedItem.winner === 'heb' && <span className="text-lime-500 text-[10px]">★ Mejor Precio</span>}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{selectedItem.heb.packageSize}</p>
+                  <div className="mt-2 font-mono flex items-baseline gap-2">
+                    <span className="text-base font-extrabold text-slate-900 dark:text-white">${selectedItem.heb.priceMxn} MXN</span>
+                    <span className="text-slate-400 text-[10px]">(${selectedItem.heb.unitPricePerKgMxn.toFixed(2)}/kg)</span>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1 italic">{selectedItem.heb.pros}</p>
+                </div>
+              </div>
+
+              {/* Recommendation Note */}
+              <div className="p-2.5 bg-lime-500/10 border border-lime-500/20 rounded-xl space-y-1">
+                <p className="text-xs font-bold text-lime-700 dark:text-lime-300">
+                  💡 Recomendación de Compra:
+                </p>
+                <p className="text-[11px] text-slate-700 dark:text-lime-200/90">
+                  {selectedItem.recommendation}
+                </p>
+                {selectedItem.annualSavingMxn && (
+                  <p className="text-[10px] font-mono font-bold text-lime-600 dark:text-lime-400">
+                    Ahorro anual estimado: ~${selectedItem.annualSavingMxn} MXN
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* DISPLAY 2: AI DYNAMIC COMPARISON RESULT */}
+          {aiResult && (
+            <div className="bg-slate-50 dark:bg-[#181B26] border border-slate-200 dark:border-white/10 rounded-2xl p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
+                    {aiResult.name}
+                  </h4>
+                  <span className="text-[11px] text-slate-400">{aiResult.brand} · {aiResult.category}</span>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-xs font-black uppercase bg-[#CCFF00] text-black">
+                  Ganador: {aiResult.winner.toUpperCase()} ({aiResult.savingPercentage}% ahorro)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                {aiResult.stores.costco && (
+                  <div className="p-3 bg-white dark:bg-[#12131A] rounded-xl border border-white/5 space-y-1">
+                    <span className="font-bold text-red-600">Costco</span>
+                    <p className="text-[11px] text-slate-400">{aiResult.stores.costco.packageSize}</p>
+                    <div className="font-mono font-bold text-white">${aiResult.stores.costco.priceMxn} MXN</div>
+                  </div>
+                )}
+                {aiResult.stores.heb && (
+                  <div className="p-3 bg-white dark:bg-[#12131A] rounded-xl border border-white/5 space-y-1">
+                    <span className="font-bold text-rose-500">H-E-B</span>
+                    <p className="text-[11px] text-slate-400">{aiResult.stores.heb.packageSize}</p>
+                    <div className="font-mono font-bold text-white">${aiResult.stores.heb.priceMxn} MXN</div>
+                  </div>
+                )}
+                {aiResult.stores.walmart && (
+                  <div className="p-3 bg-white dark:bg-[#12131A] rounded-xl border border-white/5 space-y-1">
+                    <span className="font-bold text-sky-500">Walmart</span>
+                    <p className="text-[11px] text-slate-400">{aiResult.stores.walmart.packageSize}</p>
+                    <div className="font-mono font-bold text-white">${aiResult.stores.walmart.priceMxn} MXN</div>
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[11px] text-slate-300 italic">
+                {aiResult.recommendation}
+              </p>
+            </div>
+          )}
+
+          {/* Quick Verified List */}
+          <div className="pt-2">
+            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
+              Productos Populares con Precios Verificados:
+            </span>
+            <div className="space-y-1.5">
+              {filteredStaples.map(item => (
+                <div
+                  key={item.barcode}
+                  onClick={() => {
+                    setSelectedItem(item);
+                    setAiResult(null);
+                  }}
+                  className="p-2.5 bg-slate-50 dark:bg-white/5 hover:bg-slate-100 dark:hover:bg-white/10 rounded-xl cursor-pointer flex items-center justify-between transition-colors"
+                >
+                  <div>
+                    <span className="font-bold text-slate-900 dark:text-white">{item.name}</span>
+                    <span className="text-slate-400 ml-2">({item.category})</span>
+                  </div>
+                  <div className="flex items-center gap-2 font-mono">
+                    <span className="text-xs text-lime-500 font-bold">Ganador: {item.winner.toUpperCase()}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
 
       </div>
     </div>

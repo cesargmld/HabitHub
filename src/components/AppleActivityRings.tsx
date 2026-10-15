@@ -44,35 +44,36 @@ export const AppleActivityRings: React.FC<AppleActivityRingsProps> = ({
     <div className="relative flex items-center justify-center select-none" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="rotate-[-90deg]">
         <defs>
-          {/* Move Ring Gradient: Iconic Apple Coral / Red-Pink */}
+          {/* Outer Ring: Athletic Electric Volt Lime */}
           <linearGradient id="moveGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#FF1255" />
-            <stop offset="100%" stopColor="#FA114F" />
+            <stop offset="0%" stopColor="#CCFF00" />
+            <stop offset="100%" stopColor="#A6E600" />
           </linearGradient>
 
-          {/* Exercise Ring Gradient: Iconic Apple Neon Lime */}
+          {/* Middle Ring: Cyber Cyan */}
           <linearGradient id="exerciseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#A1FF00" />
-            <stop offset="100%" stopColor="#7CD900" />
+            <stop offset="0%" stopColor="#00F0FF" />
+            <stop offset="100%" stopColor="#0099FF" />
           </linearGradient>
 
-          {/* Stand / Nutrition Ring Gradient: Electric Cyan */}
+          {/* Inner Ring: Fire Amber / Orange */}
           <linearGradient id="nutritionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00F0FF" />
-            <stop offset="100%" stopColor="#00C7BE" />
+            <stop offset="0%" stopColor="#FF9500" />
+            <stop offset="100%" stopColor="#FF5722" />
           </linearGradient>
+
         </defs>
 
-        {/* --- Background Tracks (Dark Translucent) --- */}
-        {/* Outer: Move */}
+        {/* --- Background Tracks (Dark Charcoal) --- */}
+        {/* Outer: Move / Steps */}
         <circle
           cx={center}
           cy={center}
           r={rMove}
           fill="none"
-          stroke="#FA114F"
+          stroke="#CCFF00"
           strokeWidth={strokeWidth}
-          className="opacity-[0.16] dark:opacity-[0.22]"
+          className="opacity-[0.14]"
         />
 
         {/* Middle: Exercise */}
@@ -81,9 +82,9 @@ export const AppleActivityRings: React.FC<AppleActivityRingsProps> = ({
           cy={center}
           r={rExercise}
           fill="none"
-          stroke="#A1FF00"
+          stroke="#00F0FF"
           strokeWidth={strokeWidth}
-          className="opacity-[0.16] dark:opacity-[0.22]"
+          className="opacity-[0.14]"
         />
 
         {/* Inner: Nutrition / Protein */}
@@ -92,13 +93,13 @@ export const AppleActivityRings: React.FC<AppleActivityRingsProps> = ({
           cy={center}
           r={rNutrition}
           fill="none"
-          stroke="#00F0FF"
+          stroke="#FF9500"
           strokeWidth={strokeWidth}
-          className="opacity-[0.16] dark:opacity-[0.22]"
+          className="opacity-[0.14]"
         />
 
         {/* --- Active Animated Rings --- */}
-        {/* Move Ring */}
+        {/* Outer: Move / Calories */}
         <circle
           cx={center}
           cy={center}
@@ -112,7 +113,7 @@ export const AppleActivityRings: React.FC<AppleActivityRingsProps> = ({
           className="transition-all duration-700 ease-out"
         />
 
-        {/* Exercise Ring */}
+        {/* Middle: Exercise */}
         <circle
           cx={center}
           cy={center}
@@ -126,7 +127,7 @@ export const AppleActivityRings: React.FC<AppleActivityRingsProps> = ({
           className="transition-all duration-700 ease-out"
         />
 
-        {/* Nutrition Ring */}
+        {/* Inner: Nutrition */}
         <circle
           cx={center}
           cy={center}

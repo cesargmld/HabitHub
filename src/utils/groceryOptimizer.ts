@@ -1,10 +1,13 @@
-import { MealPlanEntry, GroceryItem, SupermarketProduct } from '../types';
+import { MealPlanEntry, GroceryItem } from '../types';
 import { SUPERMARKET_CATALOG } from '../data/supermarketCatalog';
+import { findVerifiedStaple, VERIFIED_STAPLES_MAP } from './pricingEngine';
 
 export interface OptimizationResult {
   costcoItems: GroceryItem[];
   hebItems: GroceryItem[];
   allGroceryItems: GroceryItem[];
+  perishableItems: GroceryItem[];
+  bulkPantryItems: GroceryItem[];
   totalCostMxn: number;
   costcoSubtotalMxn: number;
   hebSubtotalMxn: number;
@@ -13,32 +16,52 @@ export interface OptimizationResult {
   savingsPercentage: number;
   totalProteinGramsInCart: number;
   costPerGramProteinMxn: number;
+  timeframeMultiplier: number;
+  selectedDaysCount: number;
+  totalMealsCookedCount: number;
 }
+
+const DAY_NAMES_ORDER = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
 export function generateOptimizedGroceryList(
   meals: MealPlanEntry[],
-  preferredStore: 'all' | 'costco' | 'heb' = 'all'
+  preferredStore: 'all' | 'costco' | 'heb' = 'all',
+  timeframeMultiplier: number = 1, // 1 = 1 Semana, 2 = 1 Quincena, 4 = 1 Mes
+  selectedDays: string[] = DAY_NAMES_ORDER
 ): OptimizationResult {
-  // 1. Accumulate all ingredient demands across selected meals
-  const ingredientTotals: Record<string, { totalAmountG: number; preferredStore?: string }> = {};
+  // 1. Filter meals to only those that match selectedDays
+  const activeMeals = meals.filter(entry => {
+    // If dish has assignedDay, match directly
+    if (entry.dish.assignedDay) {
+      return selectedDays.includes(entry.dish.assignedDay);
+    }
+    // Otherwise map dayOfWeek (0=Domingo, 1=Lunes, 2=Martes...)
+    const dayName = entry.dayOfWeek === 0 ? 'Domingo' : DAY_NAMES_ORDER[entry.dayOfWeek - 1] || 'Lunes';
+    return selectedDays.includes(dayName);
+  });
 
-  meals.forEach(entry => {
+  // 2. Accumulate ingredient demands across filtered meals
+  const ingredientTotals: Record<string, { totalAmountG: number; preferredStore?: string; isPerishable: boolean }> = {};
+
+  activeMeals.forEach(entry => {
     const servings = entry.servings || 1;
     entry.dish.ingredients.forEach(ing => {
       const normalizedName = ing.name.trim();
       let weightG = ing.amount;
-      // Basic unit conversion
-      if (ing.unit === 'ml') weightG = ing.amount; // roughly 1g/ml
-      if (ing.unit === 'pza') weightG = ing.amount * 50; // default piece weight
+      if (ing.unit === 'ml') weightG = ing.amount;
+      if (ing.unit === 'pza') weightG = ing.amount * 50;
       if (ing.unit === 'taza') weightG = ing.amount * 240;
       if (ing.unit === 'cda') weightG = ing.amount * 15;
 
-      const totalIngWeight = weightG * servings;
+      const totalIngWeight = weightG * servings * timeframeMultiplier;
+      const verified = findVerifiedStaple(normalizedName);
+      const isPerishable = verified ? verified.isPerishable : (!normalizedName.toLowerCase().includes('avena') && !normalizedName.toLowerCase().includes('arroz') && !normalizedName.toLowerCase().includes('proteina') && !normalizedName.toLowerCase().includes('atun'));
 
       if (!ingredientTotals[normalizedName]) {
         ingredientTotals[normalizedName] = {
           totalAmountG: 0,
-          preferredStore: ing.preferredStore
+          preferredStore: ing.preferredStore,
+          isPerishable
         };
       }
       ingredientTotals[normalizedName].totalAmountG += totalIngWeight;
@@ -47,9 +70,10 @@ export function generateOptimizedGroceryList(
 
   const groceryItems: GroceryItem[] = [];
 
-  // 2. Match each ingredient to best store or catalog item
+  // 3. Match each ingredient to best store or catalog item
   Object.entries(ingredientTotals).forEach(([ingName, info], index) => {
     const searchLower = ingName.toLowerCase();
+    const verified = findVerifiedStaple(ingName);
     
     // Find closest matches in catalog
     const matchingProducts = SUPERMARKET_CATALOG.filter(p => {
@@ -72,59 +96,77 @@ export function generateOptimizedGroceryList(
     let altPrice = 60.00;
     let altStore: 'costco' | 'heb' = 'costco';
     let pkgDesc = `${info.totalAmountG}g porción estimada`;
+    let isPerishable = info.isPerishable;
+    let shelfLife = verified ? verified.shelfLifeDays : 7;
 
     // Decision rule for bulk Costco vs Fresh H-E-B:
     // Bulk in Costco is recommended if:
-    // - Item is non-perishable (oats, peanut butter, whey, olive oil, rice)
-    // - OR high usage volume (> 600g of chicken or egg whites or beef)
-    // - OR preferredStore is 'costco'
-    const isHighVolumeProtein = (searchLower.includes('pollo') || searchLower.includes('clara') || searchLower.includes('huevo') || searchLower.includes('carne') || searchLower.includes('atún')) && info.totalAmountG >= 400;
-    const isPantryStaple = searchLower.includes('avena') || searchLower.includes('arroz') || searchLower.includes('cacahuate') || searchLower.includes('aceite') || searchLower.includes('berries') || searchLower.includes('proteína') || searchLower.includes('yogurt');
+    // - Item is non-perishable (oats, whey, rice, tuna cans, frozen chicken packs)
+    // - OR high usage volume
+    const isPantryStaple = searchLower.includes('avena') || searchLower.includes('arroz') || searchLower.includes('cacahuate') || searchLower.includes('aceite') || searchLower.includes('proteína') || searchLower.includes('atún') || searchLower.includes('quinoa');
+    const isBulkProtein = (searchLower.includes('pollo') || searchLower.includes('salmón') || searchLower.includes('clara') || searchLower.includes('huevo')) && info.totalAmountG >= 500;
 
     if (preferredStore === 'costco') {
       recommendedStore = costcoMatch ? 'costco' : 'heb';
     } else if (preferredStore === 'heb') {
       recommendedStore = 'heb';
     } else {
-      if ((isHighVolumeProtein || isPantryStaple) && costcoMatch) {
+      if ((isPantryStaple || isBulkProtein) && costcoMatch) {
         recommendedStore = 'costco';
-        reason = `Ahorro mayoreo por volumen (${costcoMatch.brand} rinde múltiples comidas a menor costo por kg)`;
+        reason = `📦 Ahorro mayoreo en Costco (${costcoMatch.brand} rinde múltiples semanas al menor costo por kilo)`;
       } else {
         recommendedStore = 'heb';
-        reason = 'Frescura óptima, porción justa y cero desperdicio';
+        reason = '🥬 Frescura garantizada en H-E-B para consumo semanal sin merma ni desperdicio';
       }
     }
 
     if (recommendedStore === 'costco' && costcoMatch) {
-      estPrice = costcoMatch.priceMxn;
+      // Calculate how many packages needed
+      const pkgsNeeded = Math.max(1, Math.ceil(info.totalAmountG / (costcoMatch.packageWeightG || 1000)));
+      estPrice = costcoMatch.priceMxn * pkgsNeeded;
       costPer100g = (costcoMatch.unitPricePerKgMxn / 10);
-      pkgDesc = costcoMatch.packageDescription;
+      pkgDesc = `${pkgsNeeded > 1 ? `${pkgsNeeded}x ` : ''}${costcoMatch.packageDescription}`;
       altStore = 'heb';
       if (hebMatch) {
-        // Equivalent cost in HEB for that amount
-        altPrice = Math.round((costcoMatch.packageWeightG / 1000) * hebMatch.unitPricePerKgMxn);
+        altPrice = Math.round((costcoMatch.packageWeightG * pkgsNeeded / 1000) * hebMatch.unitPricePerKgMxn);
       } else {
-        altPrice = Math.round(estPrice * 1.35); // retail is typically ~35% more expensive per kg
+        altPrice = Math.round(estPrice * 1.30);
       }
     } else if (hebMatch) {
-      estPrice = hebMatch.priceMxn;
+      const neededKg = info.totalAmountG / 1000;
+      estPrice = Math.max(20, Math.round(neededKg * hebMatch.unitPricePerKgMxn));
       costPer100g = (hebMatch.unitPricePerKgMxn / 10);
-      pkgDesc = hebMatch.packageDescription;
+      pkgDesc = `${Math.round(info.totalAmountG)}g (${hebMatch.packageDescription})`;
       altStore = 'costco';
-      altPrice = costcoMatch ? costcoMatch.priceMxn : Math.round(estPrice * 1.2);
+      altPrice = costcoMatch ? costcoMatch.priceMxn : Math.round(estPrice * 1.25);
+    } else if (verified) {
+      const neededKg = info.totalAmountG / 1000;
+      if (recommendedStore === 'costco' && verified.stores.costco) {
+        estPrice = Math.round(Math.max(verified.stores.costco.priceMxn, neededKg * verified.stores.costco.unitPricePerKgMxn));
+        costPer100g = verified.stores.costco.unitPricePerKgMxn / 10;
+        pkgDesc = verified.stores.costco.packageName;
+        altPrice = verified.stores.heb ? Math.round(neededKg * verified.stores.heb.unitPricePerKgMxn) : Math.round(estPrice * 1.3);
+      } else {
+        estPrice = Math.max(15, Math.round(neededKg * verified.stores.heb.unitPricePerKgMxn));
+        costPer100g = verified.stores.heb.unitPricePerKgMxn / 10;
+        pkgDesc = verified.stores.heb.packageName;
+        altPrice = verified.stores.costco ? verified.stores.costco.priceMxn : Math.round(estPrice * 1.25);
+      }
     } else {
       // Fallback calculation
+      const neededG = info.totalAmountG;
       if (searchLower.includes('pollo')) {
-        estPrice = recommendedStore === 'costco' ? 329 : 148;
-        pkgDesc = recommendedStore === 'costco' ? 'Bolsa 2.5kg al vacío' : 'Charola fresca 900g';
+        estPrice = recommendedStore === 'costco' ? 329 : Math.round((neededG / 1000) * 165);
+        pkgDesc = recommendedStore === 'costco' ? 'Bolsa 2.5kg al vacío' : `${Math.round(neededG)}g frescos`;
       } else if (searchLower.includes('clara') || searchLower.includes('huevo')) {
         estPrice = recommendedStore === 'costco' ? 198 : 62;
         pkgDesc = recommendedStore === 'costco' ? 'Pack 4x1kg' : 'Botella 1L';
-      } else if (searchLower.includes('aguacate') || searchLower.includes('espinaca') || searchLower.includes('jitomate')) {
-        recommendedStore = 'heb';
-        estPrice = 38.00;
-        pkgDesc = 'Porción fresca seleccionada';
+      } else {
+        estPrice = Math.max(15, Math.round((neededG / 1000) * 45));
+        pkgDesc = `${Math.round(neededG)}g porción estimada`;
       }
+      costPer100g = 4.5;
+      altPrice = Math.round(estPrice * 1.25);
     }
 
     const savings = Math.max(0, altPrice - estPrice);
@@ -132,7 +174,7 @@ export function generateOptimizedGroceryList(
     groceryItems.push({
       id: `grocery-${index}-${ingName}`,
       name: ingName,
-      category: searchLower.includes('pollo') || searchLower.includes('clara') || searchLower.includes('carne') || searchLower.includes('atun') ? 'Proteínas' : searchLower.includes('avena') || searchLower.includes('arroz') || searchLower.includes('tortilla') ? 'Carbohidratos' : 'Frescos y Grasas',
+      category: searchLower.includes('pollo') || searchLower.includes('clara') || searchLower.includes('huevo') || searchLower.includes('carne') || searchLower.includes('atun') || searchLower.includes('pescado') || searchLower.includes('pavo') || searchLower.includes('salmon') ? 'Proteínas' : searchLower.includes('avena') || searchLower.includes('arroz') || searchLower.includes('tortilla') || searchLower.includes('quinoa') || searchLower.includes('papa') || searchLower.includes('camote') ? 'Carbohidratos' : searchLower.includes('aguacate') || searchLower.includes('aceite') || searchLower.includes('cacahuate') ? 'Grasas Saludables' : 'Frescos y Verduras',
       recommendedStore,
       reason,
       neededWeightG: Math.round(info.totalAmountG),
@@ -142,18 +184,21 @@ export function generateOptimizedGroceryList(
       alternativeStore: altStore,
       alternativePriceMxn: altPrice,
       savingsMxn: savings > 5 ? savings : undefined,
-      isChecked: false
+      isChecked: false,
+      isPerishable,
+      shelfLifeDays: shelfLife
     });
   });
 
   const costcoItems = groceryItems.filter(item => item.recommendedStore === 'costco');
   const hebItems = groceryItems.filter(item => item.recommendedStore === 'heb');
+  const perishableItems = groceryItems.filter(item => item.isPerishable);
+  const bulkPantryItems = groceryItems.filter(item => !item.isPerishable);
 
   const costcoSubtotalMxn = costcoItems.reduce((sum, item) => sum + item.estimatedPriceMxn, 0);
   const hebSubtotalMxn = hebItems.reduce((sum, item) => sum + item.estimatedPriceMxn, 0);
   const totalCostMxn = costcoSubtotalMxn + hebSubtotalMxn;
 
-  // Calculate baseline cost if everything were bought individually at standard supermarket
   const allHebAlternativeTotalMxn = groceryItems.reduce((sum, item) => {
     if (item.recommendedStore === 'costco' && item.alternativePriceMxn) {
       return sum + item.alternativePriceMxn;
@@ -166,11 +211,8 @@ export function generateOptimizedGroceryList(
     ? Math.round((estimatedSavingsMxn / allHebAlternativeTotalMxn) * 100) 
     : 0;
 
-  // Calculate protein density in basket
-  const totalProteinGramsInCart = meals.reduce(
-    (sum, m) => sum + (m.dish.proteinG * (m.servings || 1)), 
-    0
-  );
+  // Approximate protein in cart
+  const totalProteinGramsInCart = activeMeals.reduce((sum, m) => sum + (m.dish.proteinG * (m.servings || 1)), 0) * timeframeMultiplier;
   const costPerGramProteinMxn = totalProteinGramsInCart > 0 
     ? parseFloat((totalCostMxn / totalProteinGramsInCart).toFixed(2)) 
     : 0;
@@ -179,13 +221,18 @@ export function generateOptimizedGroceryList(
     costcoItems,
     hebItems,
     allGroceryItems: groceryItems,
+    perishableItems,
+    bulkPantryItems,
     totalCostMxn,
     costcoSubtotalMxn,
     hebSubtotalMxn,
     allHebAlternativeTotalMxn,
     estimatedSavingsMxn,
     savingsPercentage,
-    totalProteinGramsInCart: Math.round(totalProteinGramsInCart),
-    costPerGramProteinMxn
+    totalProteinGramsInCart,
+    costPerGramProteinMxn,
+    timeframeMultiplier,
+    selectedDaysCount: selectedDays.length,
+    totalMealsCookedCount: activeMeals.length * timeframeMultiplier
   };
 }

@@ -3,22 +3,40 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    --bg-dark: #0B0C10;
+    --card-dark: #13151D;
+    --card-dark-hover: #181B26;
+    --border-dark: rgba(255, 255, 255, 0.07);
+    --neon-lime: #CCFF00;
+  }
+
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "SF Pro", "Public Sans", "Inter", -apple-system-subheadline, "Helvetica Neue", Helvetica, Arial, sans-serif;
-    letter-spacing: -0.012em;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+    letter-spacing: -0.015em;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-color: #0B0C10;
+    color: #FFFFFF;
   }
 }
 
 .font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
 }
 
-/* Subtle iOS Scrollbars */
+/* Clean matte button transitions */
+.btn-matte {
+  transition: all 0.15s ease-in-out;
+}
+.btn-matte:active {
+  transform: scale(0.97);
+}
+
+/* Subtle Scrollbars */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -27,22 +45,32 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(140, 140, 145, 0.25);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(140, 140, 145, 0.45);
+  background: rgba(204, 255, 0, 0.4);
 }
 
-/* Smooth safe areas for iPhone */
+/* Mobile Safe Areas */
 .pb-safe {
-  padding-bottom: max(1rem, env(safe-area-inset-bottom, 1.25rem));
+  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.5rem));
 }
 .pt-safe {
   padding-top: max(0.5rem, env(safe-area-inset-top, 0.75rem));
 }
 
-/* iOS PDF & Print Optimization */
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Print Optimization */
 @media print {
   header, nav, .pb-safe, button {
     display: none !important;

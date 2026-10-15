@@ -23,7 +23,7 @@ export const WeeklyTrendChart: React.FC<WeeklyTrendChartProps> = ({ trendData })
     <div className="bg-[#FFFFFF] dark:bg-[#1C1C1E] border border-black/[0.06] dark:border-white/[0.08] rounded-[22px] p-4.5 sm:p-5 shadow-[0_2px_12px_rgba(0,0,0,0.03)] dark:shadow-none transition-colors">
       <div className="flex items-center justify-between mb-3.5">
         <div className="flex items-center gap-2">
-          <BarChart2 className="w-4 h-4 text-[#A1FF00]" />
+          <BarChart2 className="w-4 h-4 text-slate-300" />
           <h4 className="text-[14px] font-semibold tracking-tight text-[#1C1C1E] dark:text-[#F5F5F7]">
             Tendencia Energética Semanal
           </h4>
@@ -62,7 +62,7 @@ export const WeeklyTrendChart: React.FC<WeeklyTrendChartProps> = ({ trendData })
 
               {/* Day Label */}
               <span className={`text-[10px] uppercase font-bold tracking-tight ${
-                d.isToday ? 'text-[#A1FF00]' : 'text-[#8E8E93]'
+                d.isToday ? 'text-white' : 'text-[#8E8E93]'
               }`}>
                 {d.dayName}
               </span>

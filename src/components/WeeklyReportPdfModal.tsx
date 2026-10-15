@@ -168,7 +168,7 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
           <div className="p-4 rounded-2xl bg-gradient-to-br from-[#F2F2F7] to-[#E5E5EA] dark:from-[#2C2C2E] dark:to-[#1C1C1E] border border-black/[0.04] dark:border-white/[0.06]">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-[#A1FF00]">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
                   Habithub Health Summary
                 </span>
                 <h4 className="text-[18px] font-extrabold text-[#1C1C1E] dark:text-[#F5F5F7] tracking-tight">
@@ -184,12 +184,12 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
                   Balance Semanal
                 </span>
                 <span className={`text-[20px] font-extrabold font-mono tabular-nums ${
-                  netCaloricBalance <= 0 ? 'text-[#A1FF00]' : 'text-amber-500'
+                  netCaloricBalance <= 0 ? 'text-white' : 'text-amber-500'
                 }`}>
                   {netCaloricBalance <= 0 ? `${netCaloricBalance}` : `+${netCaloricBalance}`} kcal
                 </span>
                 {netCaloricBalance < 0 && (
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-[#A1FF00] block">
+                  <span className="text-[10px] font-bold text-white block">
                     ~{estimatedFatLossGrams}g grasa oxidada
                   </span>
                 )}
@@ -212,7 +212,7 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
             </div>
 
             <div className="p-3 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]/60 border border-black/[0.04] dark:border-white/[0.06]">
-              <span className="text-[10px] font-bold uppercase text-[#A1FF00] block">Entrenos</span>
+              <span className="text-[10px] font-bold uppercase text-slate-300 block">Entrenos</span>
               <div className="text-[16px] font-extrabold font-mono text-[#1C1C1E] dark:text-white mt-0.5">
                 {Math.floor(totalWorkoutMinutes / 60)}h {totalWorkoutMinutes % 60}m
               </div>
@@ -237,7 +237,7 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
           {/* Section: Workouts Breakdown */}
           <div className="space-y-2">
             <h5 className="text-[13px] font-bold text-[#1C1C1E] dark:text-[#F5F5F7] flex items-center gap-1.5">
-              <Zap className="w-4 h-4 text-[#A1FF00]" />
+              <Zap className="w-4 h-4 text-slate-300" />
               <span>Entrenamientos de la Semana (Coros, Polar, Apple)</span>
             </h5>
 
@@ -326,8 +326,8 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
           >
             {copied ? (
               <>
-                <Check className="w-4 h-4 text-emerald-500" />
-                <span className="text-emerald-600 dark:text-[#A1FF00]">¡Copiado para Notas de iPhone!</span>
+                <Check className="w-4 h-4 text-white" />
+                <span className="text-white font-bold">¡Copiado para Notas de iPhone!</span>
               </>
             ) : (
               <>
@@ -339,7 +339,7 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
 
           <button
             onClick={handlePrint}
-            className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-bold text-black bg-[#A1FF00] hover:bg-[#8FE000] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
+            className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
           >
             <Printer className="w-4 h-4" />
             <span>Imprimir / Guardar en PDF</span>
