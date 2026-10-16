@@ -63,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <button
                 onClick={this.handleReset}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs bg-[#CCFF00] text-black hover:bg-[#bbf000] cursor-pointer transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-bold text-xs bg-white text-black hover:bg-slate-200 cursor-pointer transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
                 <span>Reintentar / Recargar</span>

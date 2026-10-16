@@ -117,7 +117,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
           {onOpenBarcodeScanner && (
             <button
               onClick={onOpenBarcodeScanner}
-              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-black bg-[#CCFF00] hover:bg-[#bbf000] text-black rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95"
+              className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-black bg-white hover:bg-slate-200 text-black rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95"
             >
               <ScanLine className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Escáner / Comparador de Precios</span>
@@ -129,7 +129,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
             <button
               onClick={() => setActiveSubTab('optimized_list')}
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeSubTab === 'optimized_list' ? 'bg-lime-400 text-slate-950 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                activeSubTab === 'optimized_list' ? 'bg-[#1C1C1E] dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Lista por Tienda
@@ -137,7 +137,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
             <button
               onClick={() => setActiveSubTab('perishable_split')}
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeSubTab === 'perishable_split' ? 'bg-lime-400 text-slate-950 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                activeSubTab === 'perishable_split' ? 'bg-[#1C1C1E] dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Perecederos vs Granel
@@ -145,7 +145,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
             <button
               onClick={() => setActiveSubTab('price_catalog')}
               className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeSubTab === 'price_catalog' ? 'bg-lime-400 text-slate-950 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                activeSubTab === 'price_catalog' ? 'bg-[#1C1C1E] dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Catálogo de Precios
@@ -160,7 +160,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
         {/* Row 1: Timeframe Multiplier */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/5">
           <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-lime-500" />
+            <Clock className="w-4 h-4 text-sky-400" />
             <span className="text-xs font-bold text-slate-900 dark:text-white">
               Periodo de Compra:
             </span>
@@ -177,7 +177,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
                 onClick={() => onChangeTimeframeMultiplier(t.mult)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
                   timeframeMultiplier === t.mult
-                    ? 'bg-[#CCFF00] text-black shadow-sm'
+                    ? 'bg-white text-black shadow-sm'
                     : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10'
                 }`}
               >

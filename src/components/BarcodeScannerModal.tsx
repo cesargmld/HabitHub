@@ -413,7 +413,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             </div>
             <button
               type="submit"
-              className="px-3.5 py-2 bg-[#CCFF00] hover:bg-[#bbf000] text-black font-extrabold rounded-xl transition-all cursor-pointer whitespace-nowrap"
+              className="px-3.5 py-2 bg-white hover:bg-slate-200 text-black font-bold rounded-xl transition-all cursor-pointer whitespace-nowrap"
             >
               Comparar
             </button>
@@ -466,7 +466,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 <button
                   type="button"
                   onClick={handleCapturePhoto}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#CCFF00] text-black font-bold rounded-xl cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-slate-200 text-black font-bold rounded-xl cursor-pointer"
                 >
                   <Camera className="w-3.5 h-3.5" />
                   <span>Tomar Foto y Comparar</span>
@@ -503,7 +503,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
             <div className="relative rounded-2xl overflow-hidden bg-black aspect-video max-h-56 flex items-center justify-center">
               <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
               <canvas ref={canvasRef} className="hidden" />
-              <div className="absolute inset-x-8 inset-y-6 border-2 border-dashed border-[#CCFF00] rounded-xl pointer-events-none opacity-80" />
+              <div className="absolute inset-x-8 inset-y-6 border-2 border-dashed border-white/70 rounded-xl pointer-events-none opacity-80" />
             </div>
           )}
 
@@ -515,7 +515,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
           )}
 
           {scanMessage && (
-            <p className="text-lime-600 dark:text-lime-400 text-[11px] font-mono">
+            <p className="text-emerald-400 text-[11px] font-mono">
               {scanMessage}
             </p>
           )}
@@ -544,12 +544,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 {/* Costco */}
                 <div className={`p-3 rounded-xl border ${
                   selectedItem.winner === 'costco' 
-                    ? 'bg-lime-50/50 dark:bg-lime-950/20 border-lime-500/40' 
+                    ? 'bg-white/5 border-emerald-500/40' 
                     : 'bg-white dark:bg-[#12131A] border-slate-200 dark:border-white/5'
                 }`}>
                   <div className="flex justify-between items-center font-bold">
                     <span className="text-red-600">Costco México</span>
-                    {selectedItem.winner === 'costco' && <span className="text-lime-500 text-[10px]">★ Mejor Precio</span>}
+                    {selectedItem.winner === 'costco' && <span className="text-emerald-400 text-[10px]">★ Mejor Precio</span>}
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{selectedItem.costco.packageSize}</p>
                   <div className="mt-2 font-mono flex items-baseline gap-2">
@@ -562,12 +562,12 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                 {/* H-E-B */}
                 <div className={`p-3 rounded-xl border ${
                   selectedItem.winner === 'heb' 
-                    ? 'bg-lime-50/50 dark:bg-lime-950/20 border-lime-500/40' 
+                    ? 'bg-white/5 border-emerald-500/40' 
                     : 'bg-white dark:bg-[#12131A] border-slate-200 dark:border-white/5'
                 }`}>
                   <div className="flex justify-between items-center font-bold">
                     <span className="text-rose-500">H-E-B México</span>
-                    {selectedItem.winner === 'heb' && <span className="text-lime-500 text-[10px]">★ Mejor Precio</span>}
+                    {selectedItem.winner === 'heb' && <span className="text-emerald-400 text-[10px]">★ Mejor Precio</span>}
                   </div>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{selectedItem.heb.packageSize}</p>
                   <div className="mt-2 font-mono flex items-baseline gap-2">
@@ -579,15 +579,15 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
               </div>
 
               {/* Recommendation Note */}
-              <div className="p-2.5 bg-lime-500/10 border border-lime-500/20 rounded-xl space-y-1">
-                <p className="text-xs font-bold text-lime-700 dark:text-lime-300">
+              <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl space-y-1">
+                <p className="text-xs font-bold text-white">
                   💡 Recomendación de Compra:
                 </p>
-                <p className="text-[11px] text-slate-700 dark:text-lime-200/90">
+                <p className="text-[11px] text-slate-300">
                   {selectedItem.recommendation}
                 </p>
                 {selectedItem.annualSavingMxn && (
-                  <p className="text-[10px] font-mono font-bold text-lime-600 dark:text-lime-400">
+                  <p className="text-[10px] font-mono font-bold text-emerald-400">
                     Ahorro anual estimado: ~${selectedItem.annualSavingMxn} MXN
                   </p>
                 )}
@@ -605,7 +605,7 @@ export const BarcodeScannerModal: React.FC<BarcodeScannerModalProps> = ({
                   </h4>
                   <span className="text-[11px] text-slate-400">{aiResult.brand} · {aiResult.category}</span>
                 </div>
-                <span className="px-2.5 py-1 rounded-full text-xs font-black uppercase bg-[#CCFF00] text-black">
+                <span className="px-2.5 py-1 rounded-full text-xs font-black uppercase bg-white text-black shadow-sm">
                   Ganador: {aiResult.winner.toUpperCase()} ({aiResult.savingPercentage}% ahorro)
                 </span>
               </div>

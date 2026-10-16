@@ -339,7 +339,7 @@ ${hebItems.map((item: any) => `- [ ] ${item.name} (${item.packageDescription}) -
 
           <button
             onClick={handlePrint}
-            className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
+            className="w-full sm:flex-1 py-2.5 px-4 rounded-xl text-xs font-extrabold text-black bg-white hover:bg-slate-200 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-sm"
           >
             <Printer className="w-4 h-4" />
             <span>Imprimir / Guardar en PDF</span>

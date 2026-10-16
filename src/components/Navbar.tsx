@@ -72,7 +72,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="w-9 h-9 rounded-full bg-[#181B26] border border-white/10 flex items-center justify-center text-white font-black text-sm shadow-sm group-hover:scale-105 transition-transform">
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#CCFF00] border-2 border-[#0B0C10]" />
+              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#007AFF] border-2 border-[#0B0C10]" />
             </button>
 
             <div>
@@ -93,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onSelectTab('dashboard')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'dashboard'
-                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  ? 'bg-white text-black shadow-sm font-bold'
                   : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -105,7 +105,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onSelectTab('planner')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'planner'
-                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  ? 'bg-white text-black shadow-sm font-bold'
                   : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -117,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onSelectTab('monthly_diets')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'monthly_diets'
-                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  ? 'bg-white text-black shadow-sm font-bold'
                   : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -129,7 +129,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onSelectTab('supermarket')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'supermarket'
-                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  ? 'bg-white text-black shadow-sm font-bold'
                   : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -141,7 +141,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onClick={() => onSelectTab('workouts')}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
                 currentTab === 'workouts'
-                  ? 'bg-[#CCFF00] text-black shadow-sm font-extrabold'
+                  ? 'bg-white text-black shadow-sm font-bold'
                   : 'text-[#8E92A4] hover:text-white hover:bg-white/[0.04]'
               }`}
             >
@@ -165,7 +165,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 onClick={onOpenBarcodeScanner}
                 title="Escanear Código de Barras o Foto (Costco vs HEB vs Walmart)"
-                className="p-2 rounded-full bg-[#161822] hover:bg-[#1E2230] border border-white/5 text-white hover:text-[#CCFF00] transition-colors cursor-pointer"
+                className="p-2 rounded-full bg-[#161822] hover:bg-[#1E2230] border border-white/5 text-white hover:text-slate-300 transition-colors cursor-pointer"
               >
                 <ScanLine className="w-4 h-4" />
               </button>
@@ -194,10 +194,10 @@ export const Navbar: React.FC<NavbarProps> = ({
               )}
             </button>
 
-            {/* Quick Record Workout CTA (Solid Matte Lime) */}
+            {/* Quick Record Workout CTA (Apple Clean Style) */}
             <button
               onClick={onOpenQuickWorkout}
-              className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold text-black bg-[#CCFF00] hover:bg-[#bbf000] active:scale-95 transition-all rounded-full shadow-sm whitespace-nowrap cursor-pointer"
+              className="flex items-center gap-1 px-3.5 py-1.5 text-xs font-bold text-black bg-white hover:bg-slate-200 active:scale-95 transition-all rounded-full shadow-sm whitespace-nowrap cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[3]" />
               <span className="hidden sm:inline">Entreno</span>
@@ -237,11 +237,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="text-[9px] font-semibold mt-0.5">Dieta</span>
           </button>
 
-          {/* Center Floating Action Button (Solid Matte Lime) */}
+          {/* Center Floating Action Button (Apple Clean White) */}
           <button
             onClick={onOpenQuickWorkout}
             title="Registrar Sesión"
-            className="w-11 h-11 -mt-3.5 rounded-full bg-[#CCFF00] hover:bg-[#bbf000] text-black flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border-2 border-[#0B0C10]"
+            className="w-11 h-11 -mt-3.5 rounded-full bg-white hover:bg-slate-200 text-black flex items-center justify-center shadow-lg active:scale-95 transition-transform cursor-pointer shrink-0 border-2 border-[#0B0C10]"
           >
             <Plus className="w-6 h-6 stroke-[3]" />
           </button>

@@ -230,7 +230,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowAiModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-[#CCFF00] hover:bg-[#bbf000] text-black rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95"
+            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold bg-white hover:bg-slate-200 text-black rounded-xl shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95"
           >
             <Sparkles className="w-3.5 h-3.5" />
             <span>Generar con IA (Calorías Exactas)</span>
@@ -487,10 +487,10 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                             const daySelect = document.getElementById(`move-day-${entry.id}`) as HTMLSelectElement;
                             const slotSelect = document.getElementById(`move-slot-${entry.id}`) as HTMLSelectElement;
                             if (daySelect && slotSelect) {
-                              handleMoveEntryTo(entry.id, daySelect.value, slotSelect.value as MealTime);
+                                handleMoveEntryTo(entry.id, daySelect.value, slotSelect.value as MealTime);
                             }
                           }}
-                          className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#bbf000] text-black font-extrabold rounded-lg cursor-pointer"
+                          className="px-3 py-1.5 bg-white hover:bg-slate-200 text-black font-extrabold rounded-lg cursor-pointer"
                         >
                           Confirmar Reubicación
                         </button>
@@ -507,10 +507,10 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
 
                 {/* Sub-panel 2: Inline Calorie-Equivalent Substitutes */}
                 {isSubstitutesOpen && (
-                  <div className="p-3 bg-lime-50/50 dark:bg-lime-950/20 border border-lime-500/30 rounded-xl space-y-2 text-xs">
+                  <div className="p-3 bg-slate-50/50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl space-y-2 text-xs">
                     <div className="flex items-center justify-between">
-                      <span className="font-bold text-lime-800 dark:text-lime-300 flex items-center gap-1.5">
-                        <TrendingDown className="w-4 h-4 text-lime-500" />
+                      <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <TrendingDown className="w-4 h-4 text-emerald-400" />
                         <span>Sustitutos Inteligentes de Calorías Idénticas:</span>
                       </span>
                       <span className="text-[10px] text-slate-400">Precios y macros verificados en México</span>
@@ -521,13 +521,13 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                         {entry.dish.substitutes?.map((sub, sIdx) => (
                           <div 
                             key={sIdx}
-                            className="bg-white dark:bg-[#12131A] border border-lime-500/20 p-2.5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+                            className="bg-white dark:bg-[#12131A] border border-slate-200 dark:border-white/10 p-2.5 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                           >
                             <div>
                               <div className="flex items-center gap-2">
                                 <span className="font-bold text-slate-900 dark:text-white">{sub.substituteIngredient}</span>
                                 <span className="px-1.5 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 font-mono font-bold text-[10px]">
-                                  Ahorro: -${sub.savingMxn.toFixed(2)} MXN
+                                   Ahorro: -${sub.savingMxn.toFixed(2)} MXN
                                 </span>
                               </div>
                               <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
@@ -537,13 +537,13 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                                 <span>Calorías: ~{sub.calories} kcal</span>
                                 <span>·</span>
                                 <span>Proteína: {sub.proteinG}g</span>
-                                <span className="text-lime-500 font-bold">(Idéntico a la dieta)</span>
+                                <span className="text-emerald-400 font-bold">(Idéntico a la dieta)</span>
                               </div>
                             </div>
 
                             <button
                               onClick={() => handleApplySubstitute(entry, sub)}
-                              className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#bbf000] text-black font-black rounded-lg text-xs transition-all cursor-pointer whitespace-nowrap self-start sm:self-center"
+                              className="px-3 py-1.5 bg-white hover:bg-slate-200 text-black font-black rounded-lg text-xs transition-all cursor-pointer whitespace-nowrap self-start sm:self-center"
                             >
                               Aplicar Sustituto
                             </button>
@@ -698,7 +698,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                       onClick={() => handleAiCategoryChange(key)}
                       className={`p-2 rounded-xl border text-center transition-all cursor-pointer capitalize font-bold ${
                         aiCategory === key
-                          ? 'bg-[#CCFF00] text-black border-[#CCFF00]'
+                          ? 'bg-white text-black border-white'
                           : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-400'
                       }`}
                     >
@@ -719,7 +719,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                     onChange={(e) => setAiTargetCalories(Number(e.target.value))}
                     className="w-full bg-slate-50 dark:bg-[#181B26] border border-slate-200 dark:border-white/10 rounded-xl p-2.5 text-slate-900 dark:text-white font-mono"
                   />
-                  <span className="text-[10px] text-lime-600 dark:text-lime-400 font-mono mt-0.5 block">
+                  <span className="text-[10px] text-emerald-400 font-mono mt-0.5 block">
                     ✓ Calibrado para {aiCategory}
                   </span>
                 </div>
@@ -763,7 +763,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
                 type="button"
                 onClick={handleGenerateAiDish}
                 disabled={isGeneratingAiDish}
-                className="px-4 py-2 text-xs font-black bg-[#CCFF00] hover:bg-[#bbf000] text-black rounded-xl cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 text-xs font-black bg-white hover:bg-slate-200 text-black rounded-xl cursor-pointer disabled:opacity-50"
               >
                 {isGeneratingAiDish ? 'Generando platillo exacto...' : 'Crear y Asignar al Día'}
               </button>
@@ -863,7 +863,7 @@ export const MealPlanner: React.FC<MealPlannerProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 text-xs font-black bg-[#CCFF00] hover:bg-[#bbf000] text-black rounded-xl cursor-pointer"
+                className="px-4 py-2 text-xs font-black bg-white hover:bg-slate-200 text-black rounded-xl cursor-pointer"
               >
                 Guardar y Asignar
               </button>

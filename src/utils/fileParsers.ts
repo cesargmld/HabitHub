@@ -75,31 +75,34 @@ export function parseTCX(tcxText: string, userWeightKg: number): ParsedWorkoutRe
   let hrSum = 0;
   let hrCount = 0;
   let maxHr = 0;
-  const avgHrNodes = xmlDoc.querySelectorAll('AverageHeartRateBpm Value');
-  avgHrNodes.forEach(node => {
-    const val = parseInt(node.textContent || '0', 10);
+  const avgHrElements = xmlDoc.getElementsByTagName('AverageHeartRateBpm');
+  for (let i = 0; i < avgHrElements.length; i++) {
+    const valNode = avgHrElements[i].getElementsByTagName('Value')[0];
+    const val = parseInt(valNode?.textContent || avgHrElements[i].textContent || '0', 10);
     if (val > 0) {
       hrSum += val;
       hrCount++;
     }
-  });
+  }
 
-  const maxHrNodes = xmlDoc.querySelectorAll('MaximumHeartRateBpm Value');
-  maxHrNodes.forEach(node => {
-    const val = parseInt(node.textContent || '0', 10);
+  const maxHrElements = xmlDoc.getElementsByTagName('MaximumHeartRateBpm');
+  for (let i = 0; i < maxHrElements.length; i++) {
+    const valNode = maxHrElements[i].getElementsByTagName('Value')[0];
+    const val = parseInt(valNode?.textContent || maxHrElements[i].textContent || '0', 10);
     if (val > maxHr) maxHr = val;
-  });
+  }
 
   const avgHeartRate = hrCount > 0 ? Math.round(hrSum / hrCount) : undefined;
 
   // Device detection from creator or metadata
   let deviceSource: DeviceSource = 'coros';
-  const creatorNode = xmlDoc.querySelector('Creator Name')?.textContent?.toLowerCase() || '';
-  if (creatorNode.includes('polar')) {
+  const creatorNode = xmlDoc.getElementsByTagName('Creator')[0];
+  const creatorText = creatorNode ? creatorNode.textContent?.toLowerCase() || '' : '';
+  if (creatorText.includes('polar')) {
     deviceSource = 'polar';
-  } else if (creatorNode.includes('apple')) {
+  } else if (creatorText.includes('apple')) {
     deviceSource = 'apple_fitness';
-  } else if (creatorNode.includes('garmin')) {
+  } else if (creatorText.includes('garmin')) {
     deviceSource = 'garmin';
   }
 
@@ -354,6 +357,9 @@ export function compressImageFile(file: File, maxDimension = 1280, quality = 0.8
  */
 export async function parseWorkoutFile(file: File, userWeightKg: number): Promise<ParsedWorkoutResult> {
   const fileName = file.name.toLowerCase();
+  if (file.type.startsWith('image/') || /\.(png|jpe?g|webp|heic|bmp|tiff)$/i.test(fileName)) {
+    throw new Error('Este archivo es una imagen/captura de pantalla. Usa la pestaña "Captura con IA" para procesarla con visión computacional.');
+  }
   const text = await file.text();
 
   if (fileName.endsWith('.tcx')) {

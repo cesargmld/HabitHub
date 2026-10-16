@@ -175,7 +175,7 @@ export const AppleHealthSyncModal: React.FC<AppleHealthSyncModalProps> = ({
             onClick={() => setActiveTab('shortcut')}
             className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
               activeTab === 'shortcut' 
-                ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' 
+                ? 'bg-white text-black font-extrabold shadow-sm' 
                 : 'text-[#8E92A4] hover:text-white'
             }`}
           >
@@ -185,7 +185,7 @@ export const AppleHealthSyncModal: React.FC<AppleHealthSyncModalProps> = ({
             onClick={() => setActiveTab('export_file')}
             className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
               activeTab === 'export_file' 
-                ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' 
+                ? 'bg-white text-black font-extrabold shadow-sm' 
                 : 'text-[#8E92A4] hover:text-white'
             }`}
           >
@@ -195,7 +195,7 @@ export const AppleHealthSyncModal: React.FC<AppleHealthSyncModalProps> = ({
             onClick={() => setActiveTab('direct_sync')}
             className={`flex-1 py-1.5 px-2 rounded-xl text-xs font-bold transition-all cursor-pointer text-center ${
               activeTab === 'direct_sync' 
-                ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' 
+                ? 'bg-white text-black font-extrabold shadow-sm' 
                 : 'text-[#8E92A4] hover:text-white'
             }`}
           >
@@ -205,7 +205,7 @@ export const AppleHealthSyncModal: React.FC<AppleHealthSyncModalProps> = ({
 
         {syncStatus && (
           <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-white text-xs flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0 text-[#CCFF00]" />
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
             <span>{syncStatus}</span>
           </div>
         )}
@@ -321,7 +321,7 @@ export const AppleHealthSyncModal: React.FC<AppleHealthSyncModalProps> = ({
             <button
               onClick={handleSimulateDirectSync}
               disabled={isSyncing}
-              className="w-full py-2.5 px-4 bg-[#CCFF00] hover:bg-[#bbf000] text-black text-xs font-extrabold rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50"
+              className="w-full py-2.5 px-4 bg-white hover:bg-slate-200 text-black text-xs font-extrabold rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50"
             >
               <Sparkles className="w-4 h-4" />
               <span>{isSyncing ? 'Sincronizando con Salud...' : 'Sincronizar Métricas de Apple Salud Ahora'}</span>

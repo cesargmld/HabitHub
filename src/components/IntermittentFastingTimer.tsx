@@ -195,7 +195,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
               </h3>
               <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-wider ${
                 isActive 
-                  ? 'bg-[#CCFF00] text-black shadow-sm' 
+                  ? 'bg-amber-500/20 text-amber-400 font-bold border border-amber-500/40' 
                   : 'bg-[#8E8E93]/20 text-[#8E8E93]'
               }`}>
                 {isActive ? 'Ayuno Activo' : 'Ventana de Comida'}
@@ -258,7 +258,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
             <defs>
               <linearGradient id="fastingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#FF9500" />
-                <stop offset="70%" stopColor="#CCFF00" />
+                <stop offset="70%" stopColor="#30D158" />
                 <stop offset="100%" stopColor="#00F0FF" />
               </linearGradient>
             </defs>
@@ -345,7 +345,7 @@ export const IntermittentFastingTimer: React.FC<IntermittentFastingTimerProps> =
               <>
                 <button
                   onClick={() => handleStartFast(0)}
-                  className="flex-1 py-2 px-3 text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] active:scale-95 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                  className="flex-1 py-2 px-3 text-xs font-extrabold text-black bg-white hover:bg-slate-200 active:scale-95 rounded-xl shadow-sm flex items-center justify-center gap-1.5 transition-all cursor-pointer"
                 >
                   <Play className="w-3.5 h-3.5 fill-black" />
                   <span>Iniciar Ayuno Ahora</span>

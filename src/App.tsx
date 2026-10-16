@@ -23,19 +23,18 @@ import { LORETTA_MONTHLY_PLAN, LORETTA_MEAL_DISHES } from './data/lorettaDietPla
 import { generateOptimizedGroceryList } from './utils/groceryOptimizer';
 import { Plus, X, Utensils } from 'lucide-react';
 
-const STORAGE_KEY_PROFILE = 'habithub_user_profile_v4';
-const STORAGE_KEY_WORKOUTS = 'habithub_workouts_v4';
-const STORAGE_KEY_DISHES = 'habithub_dishes_v4';
-const STORAGE_KEY_MEALPLAN = 'habithub_mealplan_v4';
-const STORAGE_KEY_THEME = 'habithub_theme_v4';
-const STORAGE_KEY_MONTHLY_DIETS = 'habithub_monthly_diets_v4';
-const STORAGE_KEY_FASTING = 'habithub_fasting_state_v4';
-const STORAGE_KEY_COOKING_DAYS = 'habithub_cooking_days_v4';
-const STORAGE_KEY_TIMEFRAME = 'habithub_timeframe_v4';
+const STORAGE_KEY_PROFILE = 'habithub_user_profile_v5';
+const STORAGE_KEY_WORKOUTS = 'habithub_workouts_v5';
+const STORAGE_KEY_DISHES = 'habithub_dishes_v5';
+const STORAGE_KEY_MEALPLAN = 'habithub_mealplan_v5';
+const STORAGE_KEY_THEME = 'habithub_theme_v5';
+const STORAGE_KEY_MONTHLY_DIETS = 'habithub_monthly_diets_v5';
+const STORAGE_KEY_FASTING = 'habithub_fasting_state_v5';
+const STORAGE_KEY_COOKING_DAYS = 'habithub_cooking_days_v5';
+const STORAGE_KEY_TIMEFRAME = 'habithub_timeframe_v5';
 
-const INITIAL_MONTHLY_DIETS: MonthlyDietPlan[] = [
-  LORETTA_MONTHLY_PLAN
-];
+// For new sessions, always start with an absolute clean slate (0 diets)
+const INITIAL_MONTHLY_DIETS: MonthlyDietPlan[] = [];
 
 const INITIAL_FASTING_STATE: FastingState = {
   isActive: true,
@@ -142,6 +141,20 @@ export default function App() {
     }
     localStorage.setItem(STORAGE_KEY_THEME, theme);
   }, [theme]);
+
+  // One-time startup purge: eradicate stale keys from v1-v4 to guarantee a pure 0 start
+  useEffect(() => {
+    try {
+      const keysToRemove: string[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && (key.startsWith('habithub_') || key.startsWith('personal_hub_')) && !key.endsWith('_v5')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch {}
+  }, []);
 
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
@@ -383,9 +396,16 @@ export default function App() {
     setMonthlyDiets(prev => prev.filter(d => d.id !== dietId));
   };
 
+  const handleClearAllMonthlyDiets = () => {
+    if (window.confirm('¿Seguro que deseas eliminar todas las dietas registradas y comenzar desde cero?')) {
+      setMonthlyDiets([]);
+      localStorage.removeItem(STORAGE_KEY_MONTHLY_DIETS);
+    }
+  };
+
   // One-click demo loader (for users who want to explore Loretta's plan)
   const handleLoadDemoPlan = () => {
-    setMonthlyDiets(INITIAL_MONTHLY_DIETS);
+    setMonthlyDiets([LORETTA_MONTHLY_PLAN]);
     setDishes(LORETTA_MEAL_DISHES);
     setMealPlan(buildLorettaWeekPlan(currentDate));
     setProfile(prev => ({
@@ -646,6 +666,7 @@ export default function App() {
             monthlyDiets={monthlyDiets}
             onAddMonthlyDiet={handleAddMonthlyDiet}
             onDeleteMonthlyDiet={handleDeleteMonthlyDiet}
+            onClearAllMonthlyDiets={handleClearAllMonthlyDiets}
             onApplyDietToPlanner={handleApplyDietToPlanner}
             onExportBackup={handleExportBackup}
             onImportBackup={handleImportBackup}
@@ -684,7 +705,7 @@ export default function App() {
           <div className="bg-[#13151D] border border-white/10 rounded-3xl max-w-lg w-full p-6 space-y-4 shadow-2xl transition-colors">
             <div className="flex items-center justify-between">
               <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Utensils className="w-5 h-5 text-[#CCFF00]" />
+                <Utensils className="w-5 h-5 text-slate-300" />
                 <span>Asignar Platillo al Día ({currentDate})</span>
               </h3>
               <button
@@ -713,7 +734,7 @@ export default function App() {
                     onClick={() => setSelectedMealTimeForAdd(mt.id as MealTime)}
                     className={`py-2 px-2 rounded-xl border text-center transition-all cursor-pointer font-bold ${
                       selectedMealTimeForAdd === mt.id
-                        ? 'bg-[#CCFF00] text-black border-[#CCFF00] shadow-neon-sm'
+                        ? 'bg-white text-black border-white shadow-sm'
                         : 'bg-[#181B26] border-white/5 text-[#8E92A4] hover:text-white'
                     }`}
                   >
@@ -741,10 +762,10 @@ export default function App() {
                         <span>·</span>
                         <span className="text-[#FF9500] font-bold">{dish.proteinG}g P</span>
                         <span>·</span>
-                        <span className="text-[#CCFF00] font-bold">${dish.costPerServingMxn.toFixed(2)} MXN</span>
+                        <span className="text-white font-bold">${dish.costPerServingMxn.toFixed(2)} MXN</span>
                       </div>
                     </div>
-                    <button className="px-3 py-1.5 bg-[#CCFF00] hover:bg-[#b8e600] text-black text-xs font-black rounded-xl shadow-neon-sm">
+                    <button className="px-3 py-1.5 bg-white hover:bg-slate-200 text-black text-xs font-bold rounded-xl shadow-sm">
                       Elegir
                     </button>
                   </div>

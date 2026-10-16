@@ -8,7 +8,7 @@
     --card-dark: #13151D;
     --card-dark-hover: #181B26;
     --border-dark: rgba(255, 255, 255, 0.07);
-    --neon-lime: #CCFF00;
+    --apple-accent: #007AFF;
   }
 
   body {
@@ -49,7 +49,7 @@
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(204, 255, 0, 0.4);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 /* Mobile Safe Areas */

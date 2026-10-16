@@ -166,7 +166,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                 {formattedDateTitle}
               </h2>
               {isToday && (
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#CCFF00] text-black uppercase tracking-tight shadow-sm">
+                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white text-black uppercase tracking-tight shadow-sm">
                   Hoy
                 </span>
               )}
@@ -189,7 +189,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
           {!isToday && (
             <button
               onClick={() => onChangeDate && onChangeDate(new Date().toISOString().split('T')[0])}
-              className="px-3 py-1 text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] rounded-full transition-colors cursor-pointer shadow-sm active:scale-95"
+              className="px-3 py-1 text-xs font-extrabold text-black bg-white hover:bg-slate-200 rounded-full transition-colors cursor-pointer shadow-sm active:scale-95"
             >
               Hoy
             </button>
@@ -201,7 +201,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               onClick={() => setHeroViewMode('rings')}
               className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
                 heroViewMode === 'rings' 
-                  ? 'bg-[#CCFF00] text-black shadow-sm' 
+                  ? 'bg-white text-black shadow-sm font-bold' 
                   : 'text-[#8E92A4] hover:text-white'
               }`}
             >
@@ -211,7 +211,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               onClick={() => setHeroViewMode('gauge')}
               className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
                 heroViewMode === 'gauge' 
-                  ? 'bg-[#CCFF00] text-black shadow-sm' 
+                  ? 'bg-white text-black shadow-sm font-bold' 
                   : 'text-[#8E92A4] hover:text-white'
               }`}
             >
@@ -238,10 +238,38 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         </div>
 
         {heroViewMode === 'rings' ? (
-          <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-6 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
             
-            {/* Left Column: Metric rows (Steps, Calories, Water, Fasting) */}
-            <div className="space-y-4">
+            {/* Concentric Athletic Rings: Displayed FIRST on mobile */}
+            <div className="flex flex-col items-center justify-center order-1 md:order-2 py-2">
+              <AppleActivityRings
+                moveCurrent={dailySummary.totalExpenditureTdee}
+                moveTarget={profile.dailyCalorieTarget + 400}
+                exerciseCurrent={totalWorkoutMinutes}
+                exerciseTarget={45}
+                nutritionCurrent={dailySummary.proteinConsumedG}
+                nutritionTarget={profile.proteinTargetG}
+                size={190}
+              />
+              {/* Ring Indicator Badges */}
+              <div className="flex items-center gap-3 mt-3 text-[11px] font-bold">
+                <span className="flex items-center gap-1.5 text-[#FA114F]">
+                  <span className="w-2 h-2 rounded-full bg-[#FA114F]" />
+                  <span>Movimiento</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-[#30D158]">
+                  <span className="w-2 h-2 rounded-full bg-[#30D158]" />
+                  <span>Ejercicio</span>
+                </span>
+                <span className="flex items-center gap-1.5 text-[#0A84FF]">
+                  <span className="w-2 h-2 rounded-full bg-[#0A84FF]" />
+                  <span>Nutrición</span>
+                </span>
+              </div>
+            </div>
+
+            {/* Metric rows (Steps, Calories, Water, Fasting) */}
+            <div className="space-y-4 order-2 md:order-1 w-full">
               
               {/* Steps row */}
               <div className="flex items-center justify-between">
@@ -260,7 +288,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               {/* Calories row */}
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-xs font-semibold text-[#8E92A4] block">Calories</span>
+                  <span className="text-xs font-semibold text-[#8E92A4] block">Calories (Gasto Activo)</span>
                   <div className="text-lg font-black font-mono text-white mt-0.5">
                     {dailySummary.totalExpenditureTdee} 
                     <span className="text-xs font-normal text-[#656A7B] ml-1">/ {profile.dailyCalorieTarget + 400} Cal</span>
@@ -302,19 +330,6 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
             </div>
 
-            {/* Right Column: Concentric Athletic Rings */}
-            <div className="flex items-center justify-center">
-              <AppleActivityRings
-                moveCurrent={dailySummary.totalExpenditureTdee}
-                moveTarget={profile.dailyCalorieTarget + 400}
-                exerciseCurrent={totalWorkoutMinutes}
-                exerciseTarget={45}
-                nutritionCurrent={dailySummary.proteinConsumedG}
-                nutritionTarget={profile.proteinTargetG}
-                size={180}
-              />
-            </div>
-
           </div>
         ) : (
           <div className="py-2">
@@ -341,7 +356,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         {/* Real-time Net Calorie Strip */}
         <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${isDeficit ? 'bg-[#CCFF00]' : 'bg-[#FF5722]'}`} />
+            <span className={`w-2 h-2 rounded-full ${isDeficit ? 'bg-emerald-400' : 'bg-[#FF5722]'}`} />
             <span className="font-semibold text-white">
               {isDeficit ? 'Déficit Metabólico Activo' : 'Superávit Calórico'}
             </span>
@@ -361,9 +376,9 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         {onOpenAppleHealthModal && (
           <button
             onClick={onOpenAppleHealthModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#CCFF00] shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#FA114F]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
           >
-            <Activity className="w-3.5 h-3.5 text-[#CCFF00]" />
+            <Activity className="w-3.5 h-3.5 text-[#FA114F]" />
             <span>Apple Salud Sync</span>
           </button>
         )}
@@ -371,7 +386,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         {onOpenBarcodeScanner && (
           <button
             onClick={onOpenBarcodeScanner}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#00F0FF] shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#00F0FF]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
           >
             <ScanLine className="w-3.5 h-3.5 text-[#00F0FF]" />
             <span>Comparador Súper (Costco vs HEB vs Walmart)</span>
@@ -381,7 +396,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         {onOpenWeeklyReport && (
           <button
             onClick={onOpenWeeklyReport}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#FF9500] shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#FF9500]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
           >
             <FileText className="w-3.5 h-3.5 text-[#FF9500]" />
             <span>Reporte Semanal PDF</span>
@@ -390,9 +405,9 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
         <button
           onClick={() => onNavigateTab && onNavigateTab('monthly_diets')}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-sky-400/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
         >
-          <FolderArchive className="w-3.5 h-3.5 text-[#CCFF00]" />
+          <FolderArchive className="w-3.5 h-3.5 text-sky-400" />
           <span>Dietas por Mes</span>
         </button>
 
@@ -401,7 +416,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
             onClick={() => setShowFastingWidget(prev => !prev)}
             className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0 ${
               fastingState.isActive
-                ? 'bg-[#CCFF00]/15 border-[#CCFF00]/40 text-[#CCFF00]'
+                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
                 : 'bg-[#13151D] text-[#8E8E93] border-white/[0.06]'
             }`}
           >
@@ -440,7 +455,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
       {effectiveAllMeals.length === 0 && (
         <div className="p-4 sm:p-5 rounded-3xl bg-[#13151D] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs shadow-sm">
           <div>
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#CCFF00]/15 text-[#CCFF00] tracking-wide inline-block mb-1.5">
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/10 text-white tracking-wide inline-block mb-1.5">
               Espacio Privado Listo
             </span>
             <h4 className="font-bold text-white text-sm">Comienza tu plan desde cero</h4>
@@ -451,7 +466,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
           {onLoadDemoPlan && (
             <button
               onClick={onLoadDemoPlan}
-              className="px-4 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#bbf000] text-black font-extrabold text-xs whitespace-nowrap cursor-pointer transition-colors active:scale-95 shadow-sm"
+              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-black font-extrabold text-xs whitespace-nowrap cursor-pointer transition-colors active:scale-95 shadow-sm"
             >
               🌟 Cargar Dieta de Ejemplo (Loretta)
             </button>
@@ -474,7 +489,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
           <button
             onClick={() => onOpenAddMealModal()}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-black text-black bg-[#CCFF00] hover:bg-[#bbf000] rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-black text-black bg-white hover:bg-slate-200 rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
           >
             <Plus className="w-3.5 h-3.5 stroke-[3]" />
             <span>Añadir</span>
@@ -511,7 +526,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#CCFF00] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -563,7 +578,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#CCFF00] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -615,7 +630,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#CCFF00] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -654,7 +669,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-[#CCFF00] shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -708,7 +723,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
             {onOpenQuickWorkout && (
               <button
                 onClick={onOpenQuickWorkout}
-                className="mt-3 px-4 py-2 text-xs font-bold text-black bg-[#CCFF00] hover:bg-[#bbf000] rounded-full transition-all cursor-pointer shadow-sm"
+                className="mt-3 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-slate-200 rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
               >
                 + Registrar Sesión / Captura
               </button>

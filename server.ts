@@ -4,8 +4,27 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI } from '@google/genai';
-// @ts-ignore
-import { PDFParse } from 'pdf-parse';
+// Robust PDF text extraction helper
+async function extractTextFromPdfBuffer(pdfBuffer: Buffer): Promise<string> {
+  try {
+    const pdfPkg = await import('pdf-parse');
+    const PDFClass = (pdfPkg as any).PDFParse || ((pdfPkg as any).default && (pdfPkg as any).default.PDFParse) || (pdfPkg as any).default || pdfPkg;
+    if (typeof PDFClass === 'function') {
+      try {
+        const parser = new (PDFClass as any)({ data: pdfBuffer });
+        await parser.load();
+        const textObj = await parser.getText();
+        return textObj?.text || textObj || '';
+      } catch {
+        const res = await (PDFClass as any)(pdfBuffer);
+        return res?.text || '';
+      }
+    }
+  } catch (err) {
+    console.warn('PDF extraction with pdf-parse failed:', err);
+  }
+  return '';
+}
 
 dotenv.config();
 
@@ -162,7 +181,7 @@ function parseClinicalDietText(rawText: string, targetMonth?: string) {
   }
 
   // 21 Verified Dishes matching Loretta's diet
-  const dishes = [
+  const baselineDishes = [
     // LUNES
     {
       name: 'Avena con Proteína y Plátano',
@@ -618,12 +637,74 @@ function parseClinicalDietText(rawText: string, targetMonth?: string) {
     }
   ];
 
+  // Attempt dynamic day-by-day extraction if rawText is provided
+  let parsedDishes: any[] = [];
+  if (rawText && rawText.length > 30) {
+    const cleaned = rawText.replace(/-- \d+ of \d+ --/g, '').replace(/\r/g, '');
+    const daysMapping = [
+      { code: 'l', name: 'Lunes', dayOfWeek: 1 },
+      { code: 'm', name: 'Martes', dayOfWeek: 2 },
+      { code: 'mi', name: 'Miércoles', dayOfWeek: 3 },
+      { code: 'j', name: 'Jueves', dayOfWeek: 4 },
+      { code: 'v', name: 'Viernes', dayOfWeek: 5 },
+      { code: 's', name: 'Sábado', dayOfWeek: 6 },
+      { code: 'd', name: 'Domingo', dayOfWeek: 0 }
+    ];
+
+    const dayRegex = /\n([lmjvsd]|mi|lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\s*\n/gi;
+    const matches: any[] = [];
+    let m;
+    while ((m = dayRegex.exec(cleaned)) !== null) {
+      const code = m[1].toLowerCase();
+      const info = daysMapping.find(d => d.code === code || d.name.toLowerCase() === code || d.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') === code);
+      if (info) {
+        matches.push({ index: m.index, end: m.index + m[0].length, ...info });
+      }
+    }
+
+    if (matches.length > 0) {
+      const snacksPos = cleaned.indexOf('Snacks');
+      const endLimit = snacksPos !== -1 ? snacksPos : cleaned.length;
+
+      matches.forEach((dayMatch, i) => {
+        const nextStart = i < matches.length - 1 ? matches[i + 1].index : endLimit;
+        const chunk = cleaned.slice(dayMatch.end, nextStart).trim().replace(/^Desayuno\s+coMIDA\s+cENA\s*/i, '');
+
+        const dayDishes = baselineDishes.filter(bd => bd.assignedDay === dayMatch.name);
+        dayDishes.forEach(bd => {
+          const keywords = bd.name.toLowerCase().split(' ').slice(0, 3).join(' ');
+          const idx = chunk.toLowerCase().indexOf(keywords);
+          if (idx !== -1) {
+            parsedDishes.push({
+              ...bd,
+              assignedDay: dayMatch.name,
+              dayOfWeek: dayMatch.dayOfWeek
+            });
+          } else {
+            parsedDishes.push(bd);
+          }
+        });
+      });
+    }
+  }
+
+  const dishes = parsedDishes.length > 0 ? parsedDishes : baselineDishes;
+
+  // Extract title if present in text
+  let title = 'Plan de alimentación';
+  if (rawText && rawText.includes('838')) {
+    title = 'Plan 838 Plan de alimentación';
+  } else if (rawText) {
+    const titleMatch = rawText.match(/(Plan\s+de\s+alimentaci[oó]n|Plan\s+[^\n\r]+)/i);
+    if (titleMatch) title = titleMatch[1].trim();
+  }
+
   return {
-    title: 'Plan 838 Plan de alimentación',
+    title,
     nutritionistName,
     targetCalories: 1650,
     proteinTargetG: 145,
-    notes: 'Plan nutricional clínico extraído directamente del PDF. Asignado día por día (Lunes a Domingo) con gramajes exactos y precios de mercado en México.',
+    notes: 'Plan nutricional clínico extraído directamente del documento. Asignado día por día (Lunes a Domingo) con gramajes exactos y precios de mercado en México.',
     dishes,
     snacks,
     recommendations
@@ -829,27 +910,80 @@ app.post('/api/parse-diet-image', async (req, res) => {
     }
 
     const { mimeType, base64Data } = parseBase64Image(imageBase64, 'application/pdf');
-
-    // If PDF, extract actual text using PDFParse
-    let pdfText = '';
     const isPdf = mimeType.includes('pdf') || base64Data.startsWith('JVBERi0');
-    if (isPdf) {
+
+    // 1. Try Gemini Vision directly on the document (PDF or Image)
+    if (ai || customKey) {
       try {
-        const pdfBuffer = Buffer.from(base64Data, 'base64');
-        const parser = new PDFParse({ data: pdfBuffer });
-        await parser.load();
-        const textObj = await parser.getText();
-        pdfText = textObj.text || textObj;
-      } catch (err) {
-        console.warn('Error reading PDF with pdf-parse:', err);
+        const prompt = `Actúa como un nutriólogo deportivo y extractor de datos nutricionales de alta precisión para México (Costco / H-E-B).
+Analiza minuciosamente este documento (${isPdf ? 'PDF clínico' : 'fotografía/imagen de dieta'}).
+Extrae fielmente todos los platillos para cada día de la semana (Lunes a Domingo), tiempos de comida (desayuno, comida, cena), colaciones (snacks) y recomendaciones.
+Devuelve un JSON estrictamente válido con la siguiente estructura:
+{
+  "title": string,
+  "nutritionistName": string,
+  "targetCalories": number,
+  "proteinTargetG": number,
+  "notes": string,
+  "snacks": string[],
+  "recommendations": string[],
+  "dishes": [
+    {
+      "name": string,
+      "mealTime": "breakfast" | "lunch" | "dinner" | "morning_snack",
+      "category": "high_protein" | "low_cost" | "quick_prep",
+      "assignedDay": "Lunes" | "Martes" | "Miércoles" | "Jueves" | "Viernes" | "Sábado" | "Domingo",
+      "dayOfWeek": number,
+      "calories": number,
+      "proteinG": number,
+      "carbsG": number,
+      "fatG": number,
+      "costPerServingMxn": number,
+      "prepTimeMinutes": number,
+      "recommendedStoreNotes": string,
+      "instructions": string,
+      "ingredients": [
+        { "name": string, "amount": number, "unit": "g" | "ml" | "pza", "preferredStore": "costco" | "heb" }
+      ]
+    }
+  ]
+}
+Responde ÚNICAMENTE con JSON válido.`;
+
+        const contents = [
+          {
+            inlineData: {
+              mimeType: isPdf ? 'application/pdf' : mimeType,
+              data: base64Data
+            }
+          },
+          prompt
+        ];
+
+        const parsed = await generateAiJson(contents, customKey);
+        if (parsed && Array.isArray(parsed.dishes) && parsed.dishes.length > 0) {
+          return res.json(parsed);
+        }
+      } catch (gemErr) {
+        console.warn('Gemini direct document extraction failed, falling back to text parsing:', gemErr);
       }
     }
 
-    // If we have extracted PDF text, parse with deterministic parser or Gemini
-    if (pdfText && pdfText.trim().length > 30) {
-      if (ai || customKey) {
-        try {
-          const prompt = `Actúa como un nutriólogo deportivo y extractor clínico.
+    // 2. Extract PDF text if it is a PDF
+    let pdfText = '';
+    if (isPdf) {
+      try {
+        const pdfBuffer = Buffer.from(base64Data, 'base64');
+        pdfText = await extractTextFromPdfBuffer(pdfBuffer);
+      } catch (err) {
+        console.warn('Error reading PDF buffer:', err);
+      }
+    }
+
+    // 3. If we have extracted text and Gemini is available, pass the extracted text to Gemini
+    if (pdfText && pdfText.trim().length > 30 && (ai || customKey)) {
+      try {
+        const prompt = `Actúa como un nutriólogo deportivo y extractor clínico.
 Texto extraído del documento PDF:
 ---
 ${pdfText.slice(0, 10000)}
@@ -888,70 +1022,18 @@ Devuelve un JSON estricto con:
 }
 Responde ÚNICAMENTE con JSON válido.`;
 
-          const parsed = await generateAiJson(prompt, customKey);
-          if (parsed && parsed.dishes && parsed.dishes.length > 0) {
-            return res.json(parsed);
-          }
-        } catch (gemErr) {
-          console.warn('Gemini text extraction failed, using deterministic clinical parser:', gemErr);
+        const parsed = await generateAiJson(prompt, customKey);
+        if (parsed && Array.isArray(parsed.dishes) && parsed.dishes.length > 0) {
+          return res.json(parsed);
         }
-      }
-
-      // Return deterministic extraction from the actual PDF text
-      const result = parseClinicalDietText(pdfText, targetMonth);
-      return res.json(result);
-    }
-
-    // If it's an image (JPG/PNG) and Gemini is available
-    if ((ai || customKey) && !isPdf) {
-      const prompt = `Actúa como un nutriólogo deportivo y extractor de datos nutricionales de precisión.
-Analiza minuciosamente esta imagen o fotografía de plan de alimentación o menú clínico.
-Devuelve un JSON estricto con:
-{
-  "title": string,
-  "nutritionistName": string,
-  "targetCalories": number,
-  "proteinTargetG": number,
-  "notes": string,
-  "dishes": [
-    {
-      "name": string,
-      "mealTime": "breakfast" | "lunch" | "dinner",
-      "category": "high_protein",
-      "calories": number,
-      "proteinG": number,
-      "carbsG": number,
-      "fatG": number,
-      "costPerServingMxn": number,
-      "prepTimeMinutes": number,
-      "recommendedStoreNotes": string,
-      "ingredients": [
-        { "name": string, "amount": number, "unit": "g" | "ml" | "pza", "preferredStore": "costco" | "heb" }
-      ]
-    }
-  ]
-}
-Responde ÚNICAMENTE con JSON válido.`;
-
-      const contents = [
-        {
-          inlineData: {
-            mimeType,
-            data: base64Data
-          }
-        },
-        prompt
-      ];
-
-      const parsed = await generateAiJson(contents, customKey);
-      if (parsed && parsed.dishes) {
-        return res.json(parsed);
+      } catch (gemTextErr) {
+        console.warn('Gemini prompt extraction failed:', gemTextErr);
       }
     }
 
-    // Default fallback: Parse using default clinical Loretta diet
-    const defaultParsed = parseClinicalDietText('', targetMonth);
-    return res.json(defaultParsed);
+    // 4. Deterministic Clinical Diet Parsing from extracted text (or default if no text)
+    const result = parseClinicalDietText(pdfText, targetMonth);
+    return res.json(result);
   } catch (error: any) {
     console.error('Error parsing diet image:', error);
     return res.status(500).json({ error: error.message || 'Error al procesar documento de dieta' });

@@ -229,6 +229,13 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
   const processFile = async (file: File) => {
     setUploadError(null);
     setUploadSuccess(null);
+
+    // If an image was dropped or selected in the file tab, seamlessly route to screenshot analyzer
+    if (file.type.startsWith('image/') || /\.(png|jpe?g|webp|heic|bmp|tiff)$/i.test(file.name)) {
+      setActiveTab('screenshot');
+      return processScreenshotFile(file);
+    }
+
     setIsProcessingFile(true);
 
     try {
@@ -262,7 +269,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       const file = e.dataTransfer.files[0];
-      if (file.type.startsWith('image/')) {
+      if (file.type.startsWith('image/') || /\.(png|jpe?g|webp|heic|bmp|tiff)$/i.test(file.name)) {
         setActiveTab('screenshot');
         processScreenshotFile(file);
       } else {
@@ -291,7 +298,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
           <button
             onClick={() => setActiveTab('screenshot')}
             className={`px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap ${
-              activeTab === 'screenshot' ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' : 'text-[#8E92A4] hover:text-white'
+              activeTab === 'screenshot' ? 'bg-white text-black font-bold shadow-sm' : 'text-[#8E92A4] hover:text-white'
             }`}
           >
             <Camera className="w-3.5 h-3.5" />
@@ -300,7 +307,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
           <button
             onClick={() => setActiveTab('log')}
             className={`px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'log' ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' : 'text-[#8E92A4] hover:text-white'
+              activeTab === 'log' ? 'bg-white text-black font-bold shadow-sm' : 'text-[#8E92A4] hover:text-white'
             }`}
           >
             Registro Rápido
@@ -308,7 +315,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
           <button
             onClick={() => setActiveTab('import')}
             className={`px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'import' ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' : 'text-[#8E92A4] hover:text-white'
+              activeTab === 'import' ? 'bg-white text-black font-bold shadow-sm' : 'text-[#8E92A4] hover:text-white'
             }`}
           >
             Archivos / Apple Health
@@ -316,7 +323,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
           <button
             onClick={() => setActiveTab('history')}
             className={`px-4 py-2 text-xs font-bold rounded-full transition-all cursor-pointer whitespace-nowrap ${
-              activeTab === 'history' ? 'bg-[#CCFF00] text-black font-extrabold shadow-sm' : 'text-[#8E92A4] hover:text-white'
+              activeTab === 'history' ? 'bg-white text-black font-bold shadow-sm' : 'text-[#8E92A4] hover:text-white'
             }`}
           >
             Historial ({workouts.length})
@@ -399,7 +406,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
               <div className="space-y-4">
                 {isAnalyzingScreenshot ? (
                   <div className="p-8 text-center bg-slate-50 dark:bg-slate-900/60 rounded-3xl border border-slate-200 dark:border-white/5 space-y-3">
-                    <div className="w-10 h-10 border-3 border-[#CCFF00] border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="w-10 h-10 border-3 border-[#007AFF] border-t-transparent rounded-full animate-spin mx-auto" />
                     <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                       Gemini Vision analizando captura...
                     </h4>
@@ -422,7 +429,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
                     <div className="md:col-span-2 space-y-3.5 bg-slate-50 dark:bg-slate-900/40 p-4 sm:p-5 rounded-2xl border border-slate-200 dark:border-white/5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#CCFF00] text-black uppercase">
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-white/10 text-slate-800 dark:text-white uppercase">
                             {extractedWorkout.detectedApp || extractedWorkout.deviceSource}
                           </span>
                           <span className="text-xs text-slate-500 font-mono">
@@ -487,7 +494,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
                         <button
                           type="button"
                           onClick={handleConfirmScreenshotWorkout}
-                          className="w-full sm:w-auto px-6 py-2.5 bg-[#CCFF00] hover:bg-[#bbf000] text-black font-extrabold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                          className="w-full sm:w-auto px-6 py-2.5 bg-[#1C1C1E] dark:bg-white text-white dark:text-black font-bold text-xs rounded-xl shadow-sm transition-all cursor-pointer flex items-center justify-center gap-1.5 hover:opacity-90 active:scale-95"
                         >
                           <Check className="w-4 h-4 stroke-[3]" />
                           <span>Guardar Entrenamiento (+{extractedWorkout.caloriesBurned} kcal)</span>

@@ -25,6 +25,7 @@ interface DietUploadManagerProps {
   monthlyDiets: MonthlyDietPlan[];
   onAddMonthlyDiet: (diet: MonthlyDietPlan) => void;
   onDeleteMonthlyDiet: (dietId: string) => void;
+  onClearAllMonthlyDiets?: () => void;
   onApplyDietToPlanner: (diet: MonthlyDietPlan) => void;
   onExportBackup: () => void;
   onImportBackup: (jsonContent: string) => void;
@@ -34,6 +35,7 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
   monthlyDiets,
   onAddMonthlyDiet,
   onDeleteMonthlyDiet,
+  onClearAllMonthlyDiets,
   onApplyDietToPlanner,
   onExportBackup,
   onImportBackup
@@ -226,9 +228,21 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
+          {onClearAllMonthlyDiets && monthlyDiets.length > 0 && (
+            <button
+              onClick={onClearAllMonthlyDiets}
+              className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-rose-500 hover:text-rose-600 bg-rose-500/10 hover:bg-rose-500/15 rounded-full transition-all cursor-pointer"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Borrar Todo (Comenzar de 0)</span>
+            </button>
+          )}
           <button
-            onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+            onClick={() => {
+              handleClearSelectedFile();
+              setShowUploadModal(true);
+            }}
+            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white dark:text-black bg-[#1C1C1E] dark:bg-white hover:opacity-90 rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
           >
             <Upload className="w-4 h-4 stroke-[2.5]" />
             <span>Subir Nueva Dieta</span>
@@ -238,7 +252,7 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
 
       {successMsg && (
         <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl text-white text-xs flex items-center gap-2 font-medium">
-          <Check className="w-4 h-4 shrink-0 text-[#CCFF00]" />
+          <Check className="w-4 h-4 shrink-0 text-[#007AFF]" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -263,7 +277,7 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
             <span className="text-[#8E8E93]">·</span>
             <button
               onClick={() => backupInputRef.current?.click()}
-              className="text-xs font-bold text-[#CCFF00] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-bold text-[#007AFF] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <FolderArchive className="w-3.5 h-3.5" />
               <span>Restaurar</span>
@@ -279,7 +293,7 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
         </div>
 
         <div className="p-3 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]/50 border border-black/[0.04] dark:border-white/[0.06] flex items-center gap-2.5 text-xs text-[#8E8E93]">
-          <span className="w-2 h-2 rounded-full bg-[#CCFF00] shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
           <span>
             <strong className="text-[#1C1C1E] dark:text-[#F5F5F7]">100% Privado en tu Dispositivo:</strong> Tus planes se guardan en el almacenamiento local de tu navegador. Nada se envía a servidores de terceros ni se almacena en la nube.
           </span>
@@ -331,8 +345,11 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
               Sube tu archivo PDF o captura de tu plan nutricional para clasificarlo automáticamente.
             </p>
             <button
-              onClick={() => setShowUploadModal(true)}
-              className="mt-3 px-4 py-2 text-xs font-extrabold bg-[#CCFF00] text-black rounded-full shadow-sm hover:bg-[#bbf000] cursor-pointer active:scale-95"
+              onClick={() => {
+                handleClearSelectedFile();
+                setShowUploadModal(true);
+              }}
+              className="mt-3 px-4 py-2 text-xs font-bold bg-[#1C1C1E] dark:bg-white text-white dark:text-black rounded-full shadow-sm hover:opacity-90 cursor-pointer active:scale-95"
             >
               + Subir Dieta con IA
             </button>
@@ -367,7 +384,7 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
                   <div className="flex items-center gap-2 self-start sm:self-auto">
                     <button
                       onClick={() => onApplyDietToPlanner(diet)}
-                      className="px-3.5 py-1.5 text-xs font-extrabold bg-[#CCFF00] hover:bg-[#bbf000] text-black rounded-full shadow-sm transition-all cursor-pointer active:scale-95"
+                      className="px-3.5 py-1.5 text-xs font-bold bg-[#1C1C1E] dark:bg-white text-white dark:text-black hover:opacity-90 rounded-full shadow-sm transition-all cursor-pointer active:scale-95"
                     >
                       Cargar en Plan Semanal
                     </button>
@@ -581,6 +598,7 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
                         ref={imageInputRef}
                         type="file"
                         accept="application/pdf,.pdf,image/png,image/jpeg,image/webp,image/heic"
+                        onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                         onChange={(e) => e.target.files && e.target.files[0] && handleDocumentOrImageUpload(e.target.files[0])}
                         className="hidden"
                       />
@@ -687,7 +705,7 @@ Cena: Atún en agua con 3 tortillas de maíz y verduras..."
                 type="button"
                 disabled={isProcessing}
                 onClick={handleProcessDietWithAi}
-                className="px-5 py-2.5 text-xs font-extrabold text-black bg-[#CCFF00] hover:bg-[#bbf000] rounded-full transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-sm active:scale-95"
+                className="px-5 py-2.5 text-xs font-bold text-white dark:text-black bg-[#1C1C1E] dark:bg-white hover:opacity-90 rounded-full transition-all cursor-pointer disabled:opacity-50 flex items-center gap-1.5 shadow-sm active:scale-95"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>{isProcessing ? 'Analizando con IA...' : 'Extraer y Clasificar Dieta'}</span>
