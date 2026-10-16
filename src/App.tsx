@@ -147,76 +147,49 @@ export default function App() {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
-  // 1. User Profile State (Synchronized to 1650 kcal from Loretta's plan)
+  // 1. User Profile State: Defaults to neutral profile if not saved
   const [profile, setProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_PROFILE);
     if (saved) {
       try { return JSON.parse(saved); } catch {}
     }
-    return {
-      ...DEFAULT_USER_PROFILE,
-      dailyCalorieTarget: 1650,
-      proteinTargetG: 145,
-      carbsTargetG: 160,
-      fatTargetG: 45
-    };
+    return DEFAULT_USER_PROFILE;
   });
 
-  // 2. Workouts State
+  // 2. Workouts State: Clean 0 for new users
   const [workouts, setWorkouts] = useState<WorkoutRecord[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_WORKOUTS);
     if (saved) {
-      try { return JSON.parse(saved); } catch {}
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
     }
-    return [
-      {
-        id: 'w-sample-1',
-        date: todayStr,
-        time: '06:45',
-        title: 'Rodaje Matutino Z2 (10k)',
-        deviceSource: 'coros',
-        activityType: 'running',
-        durationMinutes: 52,
-        caloriesBurned: 640,
-        avgHeartRate: 142,
-        maxHeartRate: 158,
-        distanceKm: 10.2,
-        notes: 'Ritmo suave en zona aeróbica pura con Coros Pace'
-      },
-      {
-        id: 'w-sample-2',
-        date: todayStr,
-        time: '18:30',
-        title: 'Fuerza Empuje / Hipertrofia',
-        deviceSource: 'apple_fitness',
-        activityType: 'strength_training',
-        durationMinutes: 45,
-        caloriesBurned: 280,
-        avgHeartRate: 118,
-        notes: 'Press banca, fondos y hombro con Apple Watch'
-      }
-    ];
+    return [];
   });
 
-  // 3. Dishes Library State
+  // 3. Dishes Library State: Clean 0 for new users
   const [dishes, setDishes] = useState<MealDish[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_DISHES);
     if (saved) {
-      try { return JSON.parse(saved); } catch {}
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
     }
-    return LORETTA_MEAL_DISHES;
+    return [];
   });
 
-  // 4. Meal Plan State: initialized with Loretta's meals distributed over Monday-Sunday
+  // 4. Meal Plan State: Clean 0 for new users
   const [mealPlan, setMealPlan] = useState<MealPlanEntry[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_MEALPLAN);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch {}
     }
-    return buildLorettaWeekPlan(todayStr);
+    return [];
   });
 
   // UI Modals
@@ -229,16 +202,16 @@ export default function App() {
   const [aiAdvice, setAiAdvice] = useState<string[]>([]);
   const [selectedMealTimeForAdd, setSelectedMealTimeForAdd] = useState<MealTime>('lunch');
 
-  // 5. Monthly Diets State: Default to Loretta's plan
+  // 5. Monthly Diets State: Clean 0 for new users
   const [monthlyDiets, setMonthlyDiets] = useState<MonthlyDietPlan[]>(() => {
     const saved = localStorage.getItem(STORAGE_KEY_MONTHLY_DIETS);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       } catch {}
     }
-    return INITIAL_MONTHLY_DIETS;
+    return [];
   });
 
   // 6. Fasting State
@@ -408,6 +381,33 @@ export default function App() {
 
   const handleDeleteMonthlyDiet = (dietId: string) => {
     setMonthlyDiets(prev => prev.filter(d => d.id !== dietId));
+  };
+
+  // One-click demo loader (for users who want to explore Loretta's plan)
+  const handleLoadDemoPlan = () => {
+    setMonthlyDiets(INITIAL_MONTHLY_DIETS);
+    setDishes(LORETTA_MEAL_DISHES);
+    setMealPlan(buildLorettaWeekPlan(currentDate));
+    setProfile(prev => ({
+      ...prev,
+      dailyCalorieTarget: 1650,
+      proteinTargetG: 145,
+      carbsTargetG: 160,
+      fatTargetG: 45
+    }));
+  };
+
+  // Reset all data to 0
+  const handleResetAllData = () => {
+    if (window.confirm('¿Seguro que deseas reiniciar y borrar todos tus datos locales de este dispositivo?')) {
+      localStorage.clear();
+      setProfile(DEFAULT_USER_PROFILE);
+      setWorkouts([]);
+      setDishes([]);
+      setMealPlan([]);
+      setMonthlyDiets([]);
+      window.location.reload();
+    }
   };
 
   // Apply diet to weekly planner: Maps each dish to its designated day of week
@@ -585,6 +585,7 @@ export default function App() {
         onChangeDate={setCurrentDate}
         onOpenProfileModal={() => setIsProfileOpen(true)}
         onOpenWeeklyReport={() => setIsWeeklyReportOpen(true)}
+        userName={profile.name}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
@@ -620,6 +621,7 @@ export default function App() {
             onOpenBarcodeScanner={() => setIsBarcodeScannerOpen(true)}
             onOpenWeeklyReport={() => setIsWeeklyReportOpen(true)}
             onDeleteWorkout={handleDeleteWorkout}
+            onLoadDemoPlan={handleLoadDemoPlan}
           />
         )}
 
@@ -760,6 +762,8 @@ export default function App() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         onSaveProfile={setProfile}
+        onLoadDemoPlan={handleLoadDemoPlan}
+        onResetAllData={handleResetAllData}
       />
 
       {/* Modal: Barcode & Quick Supermarket Scanner (HEB vs Costco) */}

@@ -134,18 +134,18 @@ export function calculateDailySummary(
 }
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
-  name: 'César',
-  age: 30,
+  name: 'Atleta',
+  age: 28,
   gender: 'male',
-  weightKg: 74,
-  heightCm: 177,
+  weightKg: 70,
+  heightCm: 175,
   bodyFatPct: 15,
   activityLevel: 'moderate',
-  goal: 'fat_loss',
-  dailyCalorieTarget: 2200,
-  proteinTargetG: 160,
-  carbsTargetG: 230,
-  fatTargetG: 65,
-  weeklyBudgetMxn: 1600,
+  goal: 'maintenance',
+  dailyCalorieTarget: 2000,
+  proteinTargetG: 140,
+  carbsTargetG: 220,
+  fatTargetG: 60,
+  weeklyBudgetMxn: 1500,
   preferredStore: 'all'
 };

@@ -8,6 +8,8 @@ interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSaveProfile: (profile: UserProfile) => void;
+  onLoadDemoPlan?: () => void;
+  onResetAllData?: () => void;
 }
 
 export const UserProfileModal: React.FC<UserProfileModalProps> = ({
@@ -15,6 +17,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   isOpen,
   onClose,
   onSaveProfile,
+  onLoadDemoPlan,
+  onResetAllData,
 }) => {
   const [formData, setFormData] = useState<UserProfile>(profile);
 
@@ -269,7 +273,29 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
           </div>
 
-          <div className="pt-3 flex justify-end gap-2">
+          {/* Demo Data & Reset Actions */}
+          <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2">
+            {onLoadDemoPlan && (
+              <button
+                type="button"
+                onClick={() => { onLoadDemoPlan(); onClose(); }}
+                className="text-xs text-[#007AFF] hover:underline font-bold cursor-pointer"
+              >
+                🌟 Cargar Dieta de Ejemplo (Loretta)
+              </button>
+            )}
+            {onResetAllData && (
+              <button
+                type="button"
+                onClick={() => { onResetAllData(); onClose(); }}
+                className="text-xs text-[#FF453A] hover:underline font-bold cursor-pointer"
+              >
+                🗑️ Restablecer todo a 0
+              </button>
+            )}
+          </div>
+
+          <div className="pt-2 flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}

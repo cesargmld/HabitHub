@@ -57,6 +57,7 @@ interface DailyDashboardProps {
   onOpenBarcodeScanner?: () => void;
   onOpenWeeklyReport?: () => void;
   onOpenAppleHealthModal?: () => void;
+  onLoadDemoPlan?: () => void;
 }
 
 export const DailyDashboard: React.FC<DailyDashboardProps> = ({
@@ -84,7 +85,8 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
   onUpdateFastingState,
   onOpenBarcodeScanner,
   onOpenWeeklyReport,
-  onOpenAppleHealthModal
+  onOpenAppleHealthModal,
+  onLoadDemoPlan
 }) => {
   const [heroViewMode, setHeroViewMode] = useState<'rings' | 'gauge'>('rings');
   const [showFastingWidget, setShowFastingWidget] = useState<boolean>(true);
@@ -219,33 +221,6 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         </div>
       </div>
 
-      {/* Steps Widget */}
-      {(() => {
-        const estSteps = Math.min(25000, Math.max(8200, Math.round((dailySummary.neat / 0.05) + (totalWorkoutMinutes * 115))));
-        const targetSteps = 15000;
-        const stepsPct = Math.round((estSteps / targetSteps) * 100);
-
-        return (
-          <div className="bg-[#13151D] rounded-3xl p-5 border border-white/[0.06] shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-[#8E92A4]">Steps</span>
-              <div className="flex items-center gap-2.5">
-                <span className="text-xs font-bold text-white font-mono">{stepsPct}%</span>
-                <div className="w-24 h-2 bg-[#1F2330] rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-[#CCFF00] rounded-full transition-all duration-700" 
-                    style={{ width: `${Math.min(100, stepsPct)}%` }} 
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="text-2xl sm:text-3xl font-black font-mono tracking-tight text-white">
-              {estSteps.toLocaleString()} <span className="text-sm font-normal text-[#656A7B]">/ {targetSteps.toLocaleString()}</span>
-            </div>
-          </div>
-        );
-      })()}
-
       {/* Daily Activity Card */}
       <div className="bg-[#13151D] rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
         
@@ -263,7 +238,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         </div>
 
         {heroViewMode === 'rings' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+          <div className="flex flex-col-reverse md:grid md:grid-cols-2 gap-6 items-center">
             
             {/* Left Column: Metric rows (Steps, Calories, Water, Fasting) */}
             <div className="space-y-4">
@@ -460,6 +435,29 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         workouts={effectiveDayWorkouts}
         maxHrEstimate={220 - (profile?.age || 25)}
       />
+
+      {/* Welcoming Zero-State for Fresh Users */}
+      {effectiveAllMeals.length === 0 && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-[#13151D] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs shadow-sm">
+          <div>
+            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-[#CCFF00]/15 text-[#CCFF00] tracking-wide inline-block mb-1.5">
+              Espacio Privado Listo
+            </span>
+            <h4 className="font-bold text-white text-sm">Comienza tu plan desde cero</h4>
+            <p className="text-[#8E92A4] mt-0.5">
+              Tus datos son 100% privados en este dispositivo. Sube tu propio PDF en "Dietas por Mes" o prueba una dieta clínica de ejemplo.
+            </p>
+          </div>
+          {onLoadDemoPlan && (
+            <button
+              onClick={onLoadDemoPlan}
+              className="px-4 py-2.5 rounded-xl bg-[#CCFF00] hover:bg-[#bbf000] text-black font-extrabold text-xs whitespace-nowrap cursor-pointer transition-colors active:scale-95 shadow-sm"
+            >
+              🌟 Cargar Dieta de Ejemplo (Loretta)
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Comidas del Día / Food Plan */}
       <div className="bg-[#13151D] rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">

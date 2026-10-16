@@ -21,7 +21,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { WorkoutRecord, ActivityType, DeviceSource, UserProfile, WorkoutScreenshotResult } from '../types';
-import { parseWorkoutFile, fileToBase64 } from '../utils/fileParsers';
+import { parseWorkoutFile, fileToBase64, compressImageFile } from '../utils/fileParsers';
 import { estimateWorkoutCalories } from '../utils/calorieEngine';
 
 interface WorkoutTrackerProps {
@@ -95,13 +95,34 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
     return () => window.removeEventListener('paste', handlePaste);
   }, [profile.weightKg]);
 
+  const sanitizeDateStr = (d?: string, fallback = currentDate): string => {
+    if (!d) return fallback;
+    const match = String(d).match(/\d{4}-\d{2}-\d{2}/);
+    if (match) return match[0];
+    const parsed = new Date(d);
+    if (!isNaN(parsed.getTime())) return parsed.toISOString().split('T')[0];
+    return fallback;
+  };
+
+  const sanitizeTimeStr = (t?: string, fallback = '08:00'): string => {
+    if (!t) return fallback;
+    const match = String(t).match(/(\d{1,2}):(\d{2})/);
+    if (match) {
+      const hh = match[1].padStart(2, '0');
+      const mm = match[2];
+      return `${hh}:${mm}`;
+    }
+    return fallback;
+  };
+
   const processScreenshotFile = async (file: File) => {
     setUploadError(null);
     setUploadSuccess(null);
     setIsAnalyzingScreenshot(true);
 
     try {
-      const base64 = await fileToBase64(file);
+      // Compress image to max 1280px / JPEG for instant mobile upload and to stay well below Vercel limits
+      const base64 = await compressImageFile(file);
       setScreenshotPreview(base64);
 
       const res = await fetch('/api/parse-workout-screenshot', {
@@ -114,32 +135,34 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al analizar captura');
+      if (!res.ok) throw new Error(data?.error || 'Error al analizar captura');
 
       const extracted: WorkoutScreenshotResult = {
-        title: data.title || 'Entrenamiento detectado',
-        deviceSource: data.deviceSource || 'strava',
-        activityType: data.activityType || 'running',
-        durationMinutes: Number(data.durationMinutes) || 45,
-        caloriesBurned: Number(data.caloriesBurned) || 450,
-        avgHeartRate: data.avgHeartRate ? Number(data.avgHeartRate) : undefined,
-        maxHeartRate: data.maxHeartRate ? Number(data.maxHeartRate) : undefined,
-        distanceKm: data.distanceKm ? Number(data.distanceKm) : undefined,
-        elevationGainM: data.elevationGainM ? Number(data.elevationGainM) : undefined,
-        paceMinPerKm: data.paceMinPerKm || undefined,
-        date: data.date || currentDate,
-        time: data.time || '08:00',
-        confidenceNotes: data.confidenceNotes,
-        detectedApp: data.detectedApp || 'Fitness App'
+        title: data?.title || 'Entrenamiento detectado',
+        deviceSource: data?.deviceSource || 'strava',
+        activityType: data?.activityType || 'running',
+        durationMinutes: Number(data?.durationMinutes) || 45,
+        caloriesBurned: Number(data?.caloriesBurned) || 450,
+        avgHeartRate: data?.avgHeartRate ? Number(data.avgHeartRate) : undefined,
+        maxHeartRate: data?.maxHeartRate ? Number(data.maxHeartRate) : undefined,
+        distanceKm: data?.distanceKm ? Number(data.distanceKm) : undefined,
+        elevationGainM: data?.elevationGainM ? Number(data.elevationGainM) : undefined,
+        paceMinPerKm: data?.paceMinPerKm || undefined,
+        date: sanitizeDateStr(data?.date, currentDate),
+        time: sanitizeTimeStr(data?.time, '08:00'),
+        confidenceNotes: data?.confidenceNotes,
+        detectedApp: data?.detectedApp || 'Fitness App'
       };
 
       setExtractedWorkout(extracted);
       setUploadSuccess(`¡Captura de ${extracted.detectedApp || 'entrenamiento'} procesada con éxito! Revisa y confirma.`);
     } catch (err: any) {
-      setUploadError(err.message || 'Error al procesar la captura de pantalla con IA.');
+      setUploadError(err.message || 'Error al procesar la captura de pantalla.');
     } finally {
       setIsAnalyzingScreenshot(false);
-      if (screenshotInputRef.current) screenshotInputRef.current.value = '';
+      try {
+        if (screenshotInputRef.current) screenshotInputRef.current.value = '';
+      } catch {}
     }
   };
 
@@ -348,7 +371,7 @@ export const WorkoutTracker: React.FC<WorkoutTrackerProps> = ({
                 <input
                   ref={screenshotInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/webp,image/heic"
+                  accept="image/*"
                   onChange={(e) => e.target.files && e.target.files[0] && processScreenshotFile(e.target.files[0])}
                   className="hidden"
                 />

@@ -37,7 +37,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenQuickWorkout,
   onOpenProfile,
   onOpenProfileModal,
-  userName = 'Cesar',
+  userName = 'Atleta',
   theme,
   onToggleTheme,
   todayDateStr,
@@ -78,11 +78,11 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-[15px] sm:text-[17px] font-black text-white tracking-tight">
-                  Hello {userName.split(' ')[0]}!
+                  ¡Hola {userName.split(' ')[0]}!
                 </span>
               </div>
               <span className="text-[11px] font-medium text-[#7E8494] block leading-tight">
-                Let's start your day · {shortDate}
+                Empecemos tu día · {shortDate}
               </span>
             </div>
           </div>

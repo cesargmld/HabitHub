@@ -255,49 +255,34 @@ export const DietUploadManager: React.FC<DietUploadManagerProps> = ({
           <div className="flex items-center gap-2">
             <button
               onClick={onExportBackup}
-              className="text-[11px] font-semibold text-[#007AFF] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-xs font-bold text-[#007AFF] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>Exportar Respaldo</span>
+              <span>Exportar JSON</span>
             </button>
+            <span className="text-[#8E8E93]">·</span>
+            <button
+              onClick={() => backupInputRef.current?.click()}
+              className="text-xs font-bold text-[#CCFF00] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <FolderArchive className="w-3.5 h-3.5" />
+              <span>Restaurar</span>
+            </button>
+            <input
+              ref={backupInputRef}
+              type="file"
+              accept=".json"
+              onChange={(e) => e.target.files && e.target.files[0] && handleBackupFileSelected(e.target.files[0])}
+              className="hidden"
+            />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-[#8E8E93]">
-          <div className="p-3 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]/60 border border-black/[0.04] dark:border-white/[0.06]">
-            <span className="font-bold text-[#1C1C1E] dark:text-[#F5F5F7] block mb-1">
-              📱 Privacidad en tu Dispositivo (Offline Ready)
-            </span>
-            <p>
-              Tus dietas, entrenamientos y pesos se guardan en el almacenamiento local indexado de tu navegador (localStorage). <strong>No se transfieren ni venden a terceros</strong>, asegurando privacidad médica total y carga instantánea sin internet.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]/60 border border-black/[0.04] dark:border-white/[0.06]">
-            <span className="font-bold text-[#1C1C1E] dark:text-[#F5F5F7] block mb-1">
-              ☁️ Procesamiento Efímero en Memoria
-            </span>
-            <p>
-              Al subir un PDF o captura, viaja cifrado en memoria a la API de Gemini para la extracción y <strong>nunca se almacena en disco ni en Google Drive</strong>. Una vez procesado, solo los datos de texto quedan en tu navegador.
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between pt-1 text-[11px] text-[#8E8E93]">
-          <span>Puedes respaldar o transferir tu historial a otro dispositivo cuando quieras:</span>
-          <button
-            onClick={() => backupInputRef.current?.click()}
-            className="text-[#007AFF] hover:underline font-semibold cursor-pointer"
-          >
-            Restaurar archivo JSON
-          </button>
-          <input
-            ref={backupInputRef}
-            type="file"
-            accept=".json"
-            onChange={(e) => e.target.files && e.target.files[0] && handleBackupFileSelected(e.target.files[0])}
-            className="hidden"
-          />
+        <div className="p-3 rounded-2xl bg-[#F2F2F7] dark:bg-[#2C2C2E]/50 border border-black/[0.04] dark:border-white/[0.06] flex items-center gap-2.5 text-xs text-[#8E8E93]">
+          <span className="w-2 h-2 rounded-full bg-[#CCFF00] shrink-0" />
+          <span>
+            <strong className="text-[#1C1C1E] dark:text-[#F5F5F7]">100% Privado en tu Dispositivo:</strong> Tus planes se guardan en el almacenamiento local de tu navegador. Nada se envía a servidores de terceros ni se almacena en la nube.
+          </span>
         </div>
       </div>
 
