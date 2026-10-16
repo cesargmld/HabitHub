@@ -147,45 +147,47 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
   });
 
   return (
-    <div className="space-y-5 pb-24 md:pb-6">
+    <div className="space-y-5 pb-28 md:pb-12">
       
-      {/* Date Bar */}
-      <div className="flex items-center justify-between bg-[#13151D] p-3 sm:p-4 rounded-2xl border border-white/[0.06] transition-colors">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => shiftDate(-1)}
-            title="Día anterior"
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1A1D27] hover:bg-[#222634] text-[#8E92A4] hover:text-white transition-colors cursor-pointer"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
+      {/* Date Bar: Responsive for iPhone and iPad */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#13151D] p-3 sm:p-4 rounded-2xl border border-white/[0.06] transition-colors">
+        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => shiftDate(-1)}
+              title="Día anterior"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1A1D27] hover:bg-[#222634] text-[#8E92A4] hover:text-white transition-colors cursor-pointer shrink-0"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
 
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-[15px] sm:text-[17px] font-bold capitalize text-white tracking-tight">
-                {formattedDateTitle}
-              </h2>
-              {isToday && (
-                <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white text-black uppercase tracking-tight shadow-sm">
-                  Hoy
-                </span>
-              )}
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-[15px] sm:text-[17px] font-bold capitalize text-white tracking-tight">
+                  {formattedDateTitle}
+                </h2>
+                {isToday && (
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white text-black uppercase tracking-tight shadow-sm">
+                    Hoy
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-[#7E8494] leading-none mt-0.5">
+                HabitHub Athletic Track · Sincronizado
+              </p>
             </div>
-            <p className="text-[11px] text-[#7E8494] leading-none mt-0.5">
-              Habithub Athletic Track · Sincronizado
-            </p>
-          </div>
 
-          <button
-            onClick={() => shiftDate(1)}
-            title="Día siguiente"
-            className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1A1D27] hover:bg-[#222634] text-[#8E92A4] hover:text-white transition-colors cursor-pointer"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
+            <button
+              onClick={() => shiftDate(1)}
+              title="Día siguiente"
+              className="w-8 h-8 flex items-center justify-center rounded-full bg-[#1A1D27] hover:bg-[#222634] text-[#8E92A4] hover:text-white transition-colors cursor-pointer shrink-0"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-end gap-2 w-full sm:w-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-white/5">
           {!isToday && (
             <button
               onClick={() => onChangeDate && onChangeDate(new Date().toISOString().split('T')[0])}
@@ -199,7 +201,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
           <div className="flex items-center bg-[#1A1D27] p-0.5 rounded-full border border-white/5">
             <button
               onClick={() => setHeroViewMode('rings')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
                 heroViewMode === 'rings' 
                   ? 'bg-white text-black shadow-sm font-bold' 
                   : 'text-[#8E92A4] hover:text-white'
@@ -209,7 +211,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
             </button>
             <button
               onClick={() => setHeroViewMode('gauge')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
+              className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
                 heroViewMode === 'gauge' 
                   ? 'bg-white text-black shadow-sm font-bold' 
                   : 'text-[#8E92A4] hover:text-white'
@@ -222,7 +224,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
       </div>
 
       {/* Daily Activity Card */}
-      <div className="bg-[#13151D] rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
+      <div className="bg-[#13151D] rounded-3xl p-4 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
         
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[17px] font-black text-white tracking-tight">
@@ -232,13 +234,13 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
             onClick={() => onNavigateTab && onNavigateTab('workouts')}
             className="text-xs font-bold text-white hover:text-slate-300 cursor-pointer flex items-center gap-1"
           >
-            <span>See all</span>
+            <span>Ver detalles</span>
             <span>&gt;</span>
           </button>
         </div>
 
         {heroViewMode === 'rings' ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-center">
             
             {/* Concentric Athletic Rings: Displayed FIRST on mobile */}
             <div className="flex flex-col items-center justify-center order-1 md:order-2 py-2">
@@ -249,7 +251,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                 exerciseTarget={45}
                 nutritionCurrent={dailySummary.proteinConsumedG}
                 nutritionTarget={profile.proteinTargetG}
-                size={190}
+                size={185}
               />
               {/* Ring Indicator Badges */}
               <div className="flex items-center gap-3 mt-3 text-[11px] font-bold">
@@ -268,65 +270,96 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               </div>
             </div>
 
-            {/* Metric rows (Steps, Calories, Water, Fasting) */}
-            <div className="space-y-4 order-2 md:order-1 w-full">
+            {/* Apple 2x2 Metric Cards Grid (Steps, Calories, Water, Fasting) */}
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 order-2 md:order-1 w-full">
               
-              {/* Steps row */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-[#8E92A4] block">Steps</span>
-                  <div className="text-lg font-black font-mono text-white mt-0.5">
-                    {Math.round((dailySummary.neat / 0.05) + (totalWorkoutMinutes * 115)).toLocaleString()} 
-                    <span className="text-xs font-normal text-[#656A7B] ml-1">/ 15 000</span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-white font-mono">
-                  {Math.round(((dailySummary.neat / 0.05 + totalWorkoutMinutes * 115) / 15000) * 100)}%
-                </span>
-              </div>
-
-              {/* Calories row */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-[#8E92A4] block">Calories (Gasto Activo)</span>
-                  <div className="text-lg font-black font-mono text-white mt-0.5">
-                    {dailySummary.totalExpenditureTdee} 
-                    <span className="text-xs font-normal text-[#656A7B] ml-1">/ {profile.dailyCalorieTarget + 400} Cal</span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-white font-mono">
-                  {Math.round((dailySummary.totalExpenditureTdee / (profile.dailyCalorieTarget + 400)) * 100)}%
-                </span>
-              </div>
-
-              {/* Water row */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <span className="text-xs font-semibold text-[#8E92A4] block">Water</span>
-                  <div className="text-lg font-black font-mono text-white mt-0.5">
-                    {(waterMl / 1000).toFixed(1).replace('.', ',')} 
-                    <span className="text-xs font-normal text-[#656A7B] ml-1">/ 2,5 L</span>
-                  </div>
-                </div>
-                <span className="text-xs font-bold text-white font-mono">
-                  {Math.round((waterMl / 2500) * 100)}%
-                </span>
-              </div>
-
-              {/* Fasting row */}
-              {fastingState && (
+              {/* Card 1: Steps */}
+              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <div>
-                    <span className="text-xs font-semibold text-[#8E92A4] block">Fasting ({fastingState.protocol})</span>
-                    <div className="text-lg font-black font-mono text-white mt-0.5">
-                      14,3 <span className="text-xs font-normal text-[#656A7B] ml-1">/ {fastingState.targetHours} h</span>
-                    </div>
+                  <span className="text-[11px] font-bold text-[#8E92A4]">Pasos</span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
+                    {Math.min(100, Math.round(((dailySummary.neat / 0.05 + totalWorkoutMinutes * 115) / 15000) * 100))}%
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
+                    {Math.round((dailySummary.neat / 0.05) + (totalWorkoutMinutes * 115)).toLocaleString()}
                   </div>
-                  <span className="text-xs font-bold text-white font-mono">
+                  <div className="text-[10px] text-[#656A7B] font-mono">meta 15 000</div>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-[#FA114F] h-full rounded-full transition-all" 
+                    style={{ width: `${Math.min(100, Math.round(((dailySummary.neat / 0.05 + totalWorkoutMinutes * 115) / 15000) * 100))}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Card 2: Active Calories */}
+              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[#8E92A4]">Gasto Activo</span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
+                    {Math.min(100, Math.round((dailySummary.totalExpenditureTdee / (profile.dailyCalorieTarget + 400)) * 100))}%
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
+                    {dailySummary.totalExpenditureTdee} <span className="text-xs font-normal text-[#8E92A4]">kcal</span>
+                  </div>
+                  <div className="text-[10px] text-[#656A7B] font-mono">meta {profile.dailyCalorieTarget + 400}</div>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-[#FA114F] h-full rounded-full transition-all" 
+                    style={{ width: `${Math.min(100, Math.round((dailySummary.totalExpenditureTdee / (profile.dailyCalorieTarget + 400)) * 100))}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Card 3: Water Hydration */}
+              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[#8E92A4]">Agua</span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
+                    {Math.min(100, Math.round((waterMl / 2500) * 100))}%
+                  </span>
+                </div>
+                <div className="mt-2">
+                  <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
+                    {(waterMl / 1000).toFixed(1).replace('.', ',')} <span className="text-xs font-normal text-[#8E92A4]">L</span>
+                  </div>
+                  <div className="text-[10px] text-[#656A7B] font-mono">meta 2,5 L</div>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-[#0A84FF] h-full rounded-full transition-all" 
+                    style={{ width: `${Math.min(100, Math.round((waterMl / 2500) * 100))}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Card 4: Fasting */}
+              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-[#8E92A4]">Ayuno ({fastingState?.protocol || '16:8'})</span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
                     89%
                   </span>
                 </div>
-              )}
+                <div className="mt-2">
+                  <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
+                    14,3 <span className="text-xs font-normal text-[#8E92A4]">h</span>
+                  </div>
+                  <div className="text-[10px] text-[#656A7B] font-mono">meta {fastingState?.targetHours || 16} h</div>
+                </div>
+                <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
+                  <div 
+                    className="bg-[#30D158] h-full rounded-full transition-all" 
+                    style={{ width: '89%' }}
+                  />
+                </div>
+              </div>
 
             </div>
 

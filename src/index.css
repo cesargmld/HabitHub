@@ -52,12 +52,12 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Mobile Safe Areas */
+/* Mobile Safe Areas (iPhone Dynamic Island, Notch & iPad Status Bar) */
 .pb-safe {
-  padding-bottom: max(1.25rem, env(safe-area-inset-bottom, 1.5rem));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 1.25rem);
 }
 .pt-safe {
-  padding-top: max(0.5rem, env(safe-area-inset-top, 0.75rem));
+  padding-top: calc(env(safe-area-inset-top, 0px) + 0.75rem);
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
