@@ -135,12 +135,12 @@ async function generateAiJson(contents: any, customKey?: string) {
 }
 
 // Robust deterministic parser for Mexican clinical diet sheets (Lic. Loretta and similar formats)
-function parseClinicalDietText(rawText: string, targetMonth?: string) {
+function parseClinicalDietText(rawText: string, targetMonth?: string, docTitle?: string) {
   // Extract nutritionist
-  let nutritionistName = 'Lic. Loretta Regina Peña García (cambiando__habitos · 81 2912 8949)';
-  const nutMatch = rawText.match(/Lic\.\s*([^	\n\r]+)/i);
+  let nutritionistName = docTitle ? `Plan (${docTitle})` : 'Nutriólogo Clínico';
+  const nutMatch = rawText.match(/(?:Lic\.|Dra\.|Dr\.|Nutr\.|L\.N\.)\s*([^\t\n\r,]+)/i);
   if (nutMatch) {
-    nutritionistName = 'Lic. ' + nutMatch[1].trim();
+    nutritionistName = nutMatch[0].trim();
   }
 
   // Extract snacks
@@ -1262,6 +1262,63 @@ app.post('/api/sync-health', async (req, res) => {
   }
 });
 
+// Multi-Device Cloud Sync Endpoints (iPhone, iPad, Web)
+const cloudSyncStore = new Map<string, { payload: any; updatedAt: string }>();
+
+app.post('/api/cloud-sync/save', (req, res) => {
+  try {
+    const { syncKey, payload } = req.body;
+    if (!syncKey || typeof syncKey !== 'string') {
+      return res.status(400).json({ error: 'Clave de sincronización requerida' });
+    }
+    const cleanKey = syncKey.trim().toLowerCase();
+    const entry = {
+      payload,
+      updatedAt: new Date().toISOString()
+    };
+    cloudSyncStore.set(cleanKey, entry);
+
+    try {
+      const syncDir = path.join(__dirname, '.sync_vault');
+      if (!fs.existsSync(syncDir)) fs.mkdirSync(syncDir, { recursive: true });
+      fs.writeFileSync(path.join(syncDir, `${cleanKey}.json`), JSON.stringify(entry), 'utf8');
+    } catch {}
+
+    return res.json({ success: true, updatedAt: entry.updatedAt });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Error al guardar en la nube' });
+  }
+});
+
+app.get('/api/cloud-sync/load/:syncKey', (req, res) => {
+  try {
+    const cleanKey = (req.params.syncKey || '').trim().toLowerCase();
+    if (!cleanKey) {
+      return res.status(400).json({ error: 'Clave de sincronización requerida' });
+    }
+
+    let entry = cloudSyncStore.get(cleanKey);
+    if (!entry) {
+      try {
+        const filePath = path.join(__dirname, '.sync_vault', `${cleanKey}.json`);
+        if (fs.existsSync(filePath)) {
+          entry = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          if (entry) cloudSyncStore.set(cleanKey, entry);
+        }
+      } catch {}
+    }
+
+    if (!entry) {
+      return res.status(404).json({ error: `No se encontraron datos para la clave "${cleanKey}"` });
+    }
+
+    return res.json({ success: true, payload: entry.payload, updatedAt: entry.updatedAt });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message || 'Error al cargar de la nube' });
+  }
+});
+
+
 // Vite middleware in dev or static files in production
 async function startServer() {
   if (process.env.NODE_ENV !== 'production') {
@@ -1279,7 +1336,7 @@ async function startServer() {
   }
 
   app.listen(PORT, () => {
-    console.log(`NutriSpend server running on http://localhost:${PORT}`);
+    console.log(`HabitHub server running on http://localhost:${PORT}`);
   });
 }
 

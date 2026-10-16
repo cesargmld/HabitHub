@@ -128,6 +128,8 @@ export interface MealDish {
   assignedDay?: string; // 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'
   dayOfWeek?: number; // 0=Domingo, 1=Lunes, 2=Martes...
   substitutes?: IngredientSubstitute[];
+  nutritionistName?: string;
+  sourceDocument?: string;
 }
 
 export interface MealPlanEntry {
@@ -237,3 +239,15 @@ export interface FastingState {
   targetHours: number;
   history: FastingSession[];
 }
+
+export type NutritionScheduleMode = 'fractional_4h' | 'fractional_3h' | 'fasting_16_8' | 'fasting_14_10';
+
+export interface NutritionScheduleState {
+  mode: NutritionScheduleMode; // 'fractional_4h' (Comer c/4h - gastritis) o 'fasting_16_8'
+  label: string;
+  intervalHours: number; // 4 para c/4h, 16 para ayuno
+  lastMealTimestamp: string; // ISO
+  nextMealTimestamp?: string; // ISO
+  isActive: boolean;
+}
+

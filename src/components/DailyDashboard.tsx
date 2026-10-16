@@ -1,35 +1,25 @@
 import React, { useState } from 'react';
 import { 
-  Flame, 
   ChevronLeft, 
   ChevronRight, 
   CheckCircle2, 
   Circle, 
   Plus, 
-  Utensils, 
   Zap, 
-  Watch,
-  Trash2,
-  TrendingDown,
-  TrendingUp,
-  Clock,
-  Compass,
-  ShoppingCart,
-  Calendar,
-  Activity,
-  Droplet,
-  ScanLine,
-  FileText,
+  Trash2, 
+  Clock, 
+  Activity, 
+  Droplet, 
+  ScanLine, 
+  FileText, 
   FolderArchive,
-  Sparkles
+  Calendar
 } from 'lucide-react';
 import { UserProfile, WorkoutRecord, MealPlanEntry, DailySummary, FastingState } from '../types';
 import { ArcGauge } from './ArcGauge';
 import { AppleActivityRings } from './AppleActivityRings';
 import { HeartRateZones } from './HeartRateZones';
-import { WaterTracker } from './WaterTracker';
 import { WeeklyTrendChart } from './WeeklyTrendChart';
-import { IntermittentFastingTimer } from './IntermittentFastingTimer';
 
 interface DailyDashboardProps {
   currentDate: string;
@@ -85,11 +75,36 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
   onUpdateFastingState,
   onOpenBarcodeScanner,
   onOpenWeeklyReport,
-  onOpenAppleHealthModal,
-  onLoadDemoPlan
+  onOpenAppleHealthModal
 }) => {
   const [heroViewMode, setHeroViewMode] = useState<'rings' | 'gauge'>('rings');
-  const [showFastingWidget, setShowFastingWidget] = useState<boolean>(true);
+
+  // Schedule mode: Fractional eating every 4 hours (ideal for gastritis/digestion) vs optional Fasting
+  const [scheduleMode, setScheduleMode] = useState<'fractional_4h' | 'fasting'>(() => {
+    const saved = localStorage.getItem('habithub_schedule_mode_v5');
+    if (saved === 'fasting' || saved === 'fractional_4h') return saved;
+    return 'fractional_4h';
+  });
+
+  const [lastMealTimestamp, setLastMealTimestamp] = useState<string>(() => {
+    return localStorage.getItem('habithub_last_meal_time_v5') || new Date().toISOString();
+  });
+
+  const hoursSinceLastMeal = Math.max(0, (Date.now() - new Date(lastMealTimestamp).getTime()) / (3600 * 1000));
+  const fastingHours = fastingState && fastingState.startTime 
+    ? Math.max(0, (Date.now() - new Date(fastingState.startTime).getTime()) / (3600 * 1000))
+    : 0;
+
+  const handleLogMealTimeNow = () => {
+    const nowIso = new Date().toISOString();
+    setLastMealTimestamp(nowIso);
+    localStorage.setItem('habithub_last_meal_time_v5', nowIso);
+  };
+
+  const handleSwitchScheduleMode = (mode: 'fractional_4h' | 'fasting') => {
+    setScheduleMode(mode);
+    localStorage.setItem('habithub_schedule_mode_v5', mode);
+  };
 
   const effectiveAllWorkouts = allWorkouts || workouts || [];
   const effectiveAllMeals = allMeals || mealPlan || [];
@@ -113,11 +128,16 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
     onChangeDate(newDate.toISOString().split('T')[0]);
   };
 
+  // Real data calculations (STRICTLY 0 when no workouts are recorded)
+  const totalWorkoutMinutes = effectiveDayWorkouts.reduce((sum, w) => sum + w.durationMinutes, 0);
+  const activeWorkoutCalories = effectiveDayWorkouts.reduce((sum, w) => sum + (w.caloriesBurned || 0), 0);
+  const realSteps = effectiveDayWorkouts.reduce((sum, w) => {
+    if (w.distanceKm) return sum + Math.round(w.distanceKm * 1250);
+    return sum + (w.durationMinutes * 120);
+  }, 0);
+
   const netBalance = dailySummary.netCaloricBalance;
   const isDeficit = netBalance <= 0;
-
-  const totalWorkoutMinutes = effectiveDayWorkouts.reduce((sum, w) => sum + w.durationMinutes, 0);
-  const totalWorkoutKm = effectiveDayWorkouts.reduce((sum, w) => sum + (w.distanceKm || 0), 0);
 
   // Group meals by slots
   const breakfastMeals = effectiveDayMeals.filter(m => m.dish.mealTime === 'breakfast');
@@ -141,7 +161,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
       dayName: d.toLocaleDateString('es-MX', { weekday: 'narrow' }),
       dayNumber: d.getDate(),
       burned,
-      consumed: consumed > 0 ? consumed : Math.round(burned * 0.85),
+      consumed: consumed > 0 ? consumed : 0,
       isToday: dStr === currentDate
     };
   });
@@ -150,7 +170,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
     <div className="space-y-5 pb-28 md:pb-12">
       
       {/* Date Bar: Responsive for iPhone and iPad */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#13151D] p-3 sm:p-4 rounded-2xl border border-white/[0.06] transition-colors">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#13151D]/90 backdrop-blur-xl p-3 sm:p-4 rounded-2xl border border-white/[0.06] transition-colors">
         <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-2">
             <button
@@ -167,7 +187,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                   {formattedDateTitle}
                 </h2>
                 {isToday && (
-                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-white text-black uppercase tracking-tight shadow-sm">
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-[#A1FF00] text-black uppercase tracking-tight shadow-sm">
                     Hoy
                   </span>
                 )}
@@ -191,7 +211,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
           {!isToday && (
             <button
               onClick={() => onChangeDate && onChangeDate(new Date().toISOString().split('T')[0])}
-              className="px-3 py-1 text-xs font-extrabold text-black bg-white hover:bg-slate-200 rounded-full transition-colors cursor-pointer shadow-sm active:scale-95"
+              className="px-3 py-1 text-xs font-black text-black bg-[#A1FF00] hover:bg-[#8FE000] rounded-full transition-colors cursor-pointer shadow-sm active:scale-95"
             >
               Hoy
             </button>
@@ -203,7 +223,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               onClick={() => setHeroViewMode('rings')}
               className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
                 heroViewMode === 'rings' 
-                  ? 'bg-white text-black shadow-sm font-bold' 
+                  ? 'bg-[#A1FF00] text-black shadow-sm font-black' 
                   : 'text-[#8E92A4] hover:text-white'
               }`}
             >
@@ -213,7 +233,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               onClick={() => setHeroViewMode('gauge')}
               className={`px-3 py-1 text-[11px] font-bold rounded-full transition-all cursor-pointer ${
                 heroViewMode === 'gauge' 
-                  ? 'bg-white text-black shadow-sm font-bold' 
+                  ? 'bg-[#A1FF00] text-black shadow-sm font-black' 
                   : 'text-[#8E92A4] hover:text-white'
               }`}
             >
@@ -224,7 +244,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
       </div>
 
       {/* Daily Activity Card */}
-      <div className="bg-[#13151D] rounded-3xl p-4 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
+      <div className="bg-[#13151D]/90 backdrop-blur-2xl rounded-3xl p-4 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
         
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[17px] font-black text-white tracking-tight">
@@ -232,7 +252,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
           </h3>
           <button
             onClick={() => onNavigateTab && onNavigateTab('workouts')}
-            className="text-xs font-bold text-white hover:text-slate-300 cursor-pointer flex items-center gap-1"
+            className="text-xs font-bold text-[#A1FF00] hover:underline cursor-pointer flex items-center gap-1"
           >
             <span>Ver detalles</span>
             <span>&gt;</span>
@@ -242,11 +262,11 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         {heroViewMode === 'rings' ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 items-center">
             
-            {/* Concentric Athletic Rings: Displayed FIRST on mobile */}
+            {/* Concentric Athletic Rings (Starts at 0 if no workouts logged) */}
             <div className="flex flex-col items-center justify-center order-1 md:order-2 py-2">
               <AppleActivityRings
-                moveCurrent={dailySummary.totalExpenditureTdee}
-                moveTarget={profile.dailyCalorieTarget + 400}
+                moveCurrent={activeWorkoutCalories}
+                moveTarget={500}
                 exerciseCurrent={totalWorkoutMinutes}
                 exerciseTarget={45}
                 nutritionCurrent={dailySummary.proteinConsumedG}
@@ -255,70 +275,70 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
               />
               {/* Ring Indicator Badges */}
               <div className="flex items-center gap-3 mt-3 text-[11px] font-bold">
-                <span className="flex items-center gap-1.5 text-[#FA114F]">
-                  <span className="w-2 h-2 rounded-full bg-[#FA114F]" />
+                <span className="flex items-center gap-1.5 text-[#FF1255]">
+                  <span className="w-2 h-2 rounded-full bg-[#FF1255]" />
                   <span>Movimiento</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-[#30D158]">
-                  <span className="w-2 h-2 rounded-full bg-[#30D158]" />
+                <span className="flex items-center gap-1.5 text-[#A1FF00]">
+                  <span className="w-2 h-2 rounded-full bg-[#A1FF00]" />
                   <span>Ejercicio</span>
                 </span>
-                <span className="flex items-center gap-1.5 text-[#0A84FF]">
-                  <span className="w-2 h-2 rounded-full bg-[#0A84FF]" />
+                <span className="flex items-center gap-1.5 text-[#00F0FF]">
+                  <span className="w-2 h-2 rounded-full bg-[#00F0FF]" />
                   <span>Nutrición</span>
                 </span>
               </div>
             </div>
 
-            {/* Apple 2x2 Metric Cards Grid (Steps, Calories, Water, Fasting) */}
+            {/* Apple 2x2 Metric Cards Grid (Real Data: 0 if no workouts recorded) */}
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3 order-2 md:order-1 w-full">
               
-              {/* Card 1: Steps */}
-              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+              {/* Card 1: Pasos Reales */}
+              <div className="bg-[#181B26]/80 border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-[#8E92A4]">Pasos</span>
                   <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
-                    {Math.min(100, Math.round(((dailySummary.neat / 0.05 + totalWorkoutMinutes * 115) / 15000) * 100))}%
+                    {realSteps > 0 ? Math.min(100, Math.round((realSteps / 15000) * 100)) : 0}%
                   </span>
                 </div>
                 <div className="mt-2">
                   <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
-                    {Math.round((dailySummary.neat / 0.05) + (totalWorkoutMinutes * 115)).toLocaleString()}
+                    {realSteps.toLocaleString()}
                   </div>
                   <div className="text-[10px] text-[#656A7B] font-mono">meta 15 000</div>
                 </div>
                 <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
                   <div 
-                    className="bg-[#FA114F] h-full rounded-full transition-all" 
-                    style={{ width: `${Math.min(100, Math.round(((dailySummary.neat / 0.05 + totalWorkoutMinutes * 115) / 15000) * 100))}%` }}
+                    className="bg-[#FF1255] h-full rounded-full transition-all" 
+                    style={{ width: `${realSteps > 0 ? Math.min(100, Math.round((realSteps / 15000) * 100)) : 0}%` }}
                   />
                 </div>
               </div>
 
-              {/* Card 2: Active Calories */}
-              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+              {/* Card 2: Calorías Activas de Entrenamiento */}
+              <div className="bg-[#181B26]/80 border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-[#8E92A4]">Gasto Activo</span>
                   <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
-                    {Math.min(100, Math.round((dailySummary.totalExpenditureTdee / (profile.dailyCalorieTarget + 400)) * 100))}%
+                    {activeWorkoutCalories > 0 ? Math.min(100, Math.round((activeWorkoutCalories / 500) * 100)) : 0}%
                   </span>
                 </div>
                 <div className="mt-2">
                   <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
-                    {dailySummary.totalExpenditureTdee} <span className="text-xs font-normal text-[#8E92A4]">kcal</span>
+                    {activeWorkoutCalories} <span className="text-xs font-normal text-[#8E92A4]">kcal</span>
                   </div>
-                  <div className="text-[10px] text-[#656A7B] font-mono">meta {profile.dailyCalorieTarget + 400}</div>
+                  <div className="text-[10px] text-[#656A7B] font-mono">meta 500 kcal</div>
                 </div>
                 <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
                   <div 
-                    className="bg-[#FA114F] h-full rounded-full transition-all" 
-                    style={{ width: `${Math.min(100, Math.round((dailySummary.totalExpenditureTdee / (profile.dailyCalorieTarget + 400)) * 100))}%` }}
+                    className="bg-[#A1FF00] h-full rounded-full transition-all" 
+                    style={{ width: `${activeWorkoutCalories > 0 ? Math.min(100, Math.round((activeWorkoutCalories / 500) * 100)) : 0}%` }}
                   />
                 </div>
               </div>
 
-              {/* Card 3: Water Hydration */}
-              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+              {/* Card 3: Hidratación */}
+              <div className="bg-[#181B26]/80 border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-bold text-[#8E92A4]">Agua</span>
                   <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
@@ -333,30 +353,34 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                 </div>
                 <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
                   <div 
-                    className="bg-[#0A84FF] h-full rounded-full transition-all" 
+                    className="bg-[#00F0FF] h-full rounded-full transition-all" 
                     style={{ width: `${Math.min(100, Math.round((waterMl / 2500) * 100))}%` }}
                   />
                 </div>
               </div>
 
-              {/* Card 4: Fasting */}
-              <div className="bg-[#181B26] border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
+              {/* Card 4: Ritmo de Comidas */}
+              <div className="bg-[#181B26]/80 border border-white/5 rounded-2xl p-3 sm:p-3.5 flex flex-col justify-between">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-[#8E92A4]">Ayuno ({fastingState?.protocol || '16:8'})</span>
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-slate-300">
-                    89%
+                  <span className="text-[11px] font-bold text-[#8E92A4]">
+                    {scheduleMode === 'fractional_4h' ? 'Comida c/4h' : 'Ayuno 16:8'}
+                  </span>
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full bg-white/5 text-[#A1FF00]">
+                    Activo
                   </span>
                 </div>
                 <div className="mt-2">
                   <div className="text-base sm:text-lg font-black font-mono text-white tabular-nums">
-                    14,3 <span className="text-xs font-normal text-[#8E92A4]">h</span>
+                    {scheduleMode === 'fractional_4h' ? `${hoursSinceLastMeal.toFixed(1)} h` : `${fastingHours.toFixed(1)} h`}
                   </div>
-                  <div className="text-[10px] text-[#656A7B] font-mono">meta {fastingState?.targetHours || 16} h</div>
+                  <div className="text-[10px] text-[#656A7B] font-mono">
+                    {scheduleMode === 'fractional_4h' ? 'meta cada 4 h' : 'meta 16 h'}
+                  </div>
                 </div>
                 <div className="w-full bg-white/5 h-1.5 rounded-full mt-2.5 overflow-hidden">
                   <div 
-                    className="bg-[#30D158] h-full rounded-full transition-all" 
-                    style={{ width: '89%' }}
+                    className="bg-[#A1FF00] h-full rounded-full transition-all" 
+                    style={{ width: `${Math.min(100, Math.round(((scheduleMode === 'fractional_4h' ? hoursSinceLastMeal / 4 : fastingHours / 16)) * 100))}%` }}
                   />
                 </div>
               </div>
@@ -389,14 +413,14 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
         {/* Real-time Net Calorie Strip */}
         <div className="mt-4 pt-4 border-t border-white/[0.06] flex items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${isDeficit ? 'bg-emerald-400' : 'bg-[#FF5722]'}`} />
+            <span className={`w-2 h-2 rounded-full ${isDeficit ? 'bg-[#A1FF00]' : 'bg-[#FF5722]'}`} />
             <span className="font-semibold text-white">
               {isDeficit ? 'Déficit Metabólico Activo' : 'Superávit Calórico'}
             </span>
           </div>
 
           <div className="font-mono tabular-nums font-bold">
-            <span className={isDeficit ? 'text-white' : 'text-[#FF5722]'}>
+            <span className={isDeficit ? 'text-[#A1FF00]' : 'text-[#FF5722]'}>
               {netBalance > 0 ? `+${netBalance}` : netBalance} kcal netas
             </span>
           </div>
@@ -404,14 +428,14 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
       </div>
 
-      {/* Athletic Quick Actions Pills */}
+      {/* Quick Actions Bar */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
         {onOpenAppleHealthModal && (
           <button
             onClick={onOpenAppleHealthModal}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#FA114F]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#FF1255]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
           >
-            <Activity className="w-3.5 h-3.5 text-[#FA114F]" />
+            <Activity className="w-3.5 h-3.5 text-[#FF1255]" />
             <span>Apple Salud Sync</span>
           </button>
         )}
@@ -422,93 +446,246 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#00F0FF]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
           >
             <ScanLine className="w-3.5 h-3.5 text-[#00F0FF]" />
-            <span>Comparador Súper (Costco vs HEB vs Walmart)</span>
+            <span>Comparador Súper (Costco vs HEB)</span>
           </button>
         )}
 
         {onOpenWeeklyReport && (
           <button
             onClick={onOpenWeeklyReport}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#FF9500]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-amber-400/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
           >
-            <FileText className="w-3.5 h-3.5 text-[#FF9500]" />
+            <FileText className="w-3.5 h-3.5 text-amber-400" />
             <span>Reporte Semanal PDF</span>
           </button>
         )}
 
         <button
           onClick={() => onNavigateTab && onNavigateTab('monthly_diets')}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-sky-400/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold bg-[#13151D] hover:bg-[#1A1D27] text-white border border-white/[0.06] hover:border-[#A1FF00]/60 shadow-sm transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0"
         >
-          <FolderArchive className="w-3.5 h-3.5 text-sky-400" />
+          <FolderArchive className="w-3.5 h-3.5 text-[#A1FF00]" />
           <span>Dietas por Mes</span>
         </button>
-
-        {fastingState && (
-          <button
-            onClick={() => setShowFastingWidget(prev => !prev)}
-            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-bold border transition-all cursor-pointer whitespace-nowrap active:scale-95 shrink-0 ${
-              fastingState.isActive
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
-                : 'bg-[#13151D] text-[#8E8E93] border-white/[0.06]'
-            }`}
-          >
-            <Clock className="w-3.5 h-3.5 text-[#FF9500]" />
-            <span>Ayuno {fastingState.protocol} {fastingState.isActive ? '• En Curso' : ''}</span>
-          </button>
-        )}
       </div>
 
-      {/* Intermittent Fasting Widget (16:8 or 18:6 Circular Timer) */}
-      {fastingState && onUpdateFastingState && showFastingWidget && (
-        <IntermittentFastingTimer
-          fastingState={fastingState}
-          onUpdateFastingState={onUpdateFastingState}
-        />
-      )}
-
-      {/* 2-Column Responsive Split: Trends & Hydration */}
+      {/* Accessible Split Section: Hidratación & Ritmo de Comidas (Gastritis c/4h o Ayuno) */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <WeeklyTrendChart trendData={trendData} />
-        <WaterTracker
-          waterMl={waterMl}
-          targetMl={3000}
-          onAddWater={onAddWater}
-          onResetWater={onResetWater}
-        />
+        
+        {/* Card 1: Hidratación Interactiva */}
+        <div className="bg-[#13151D]/90 backdrop-blur-2xl border border-white/[0.06] rounded-3xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#00F0FF]/10 border border-[#00F0FF]/25 flex items-center justify-center text-[#00F0FF]">
+                <Droplet className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Hidratación Diaria</h4>
+                <p className="text-[11px] text-[#8E92A4]">Meta recomendada: 2,500 ml</p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-full bg-white/5 text-[#00F0FF]">
+              {Math.min(100, Math.round((waterMl / 2500) * 100))}%
+            </span>
+          </div>
+
+          <div>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-2xl sm:text-3xl font-black font-mono text-white tabular-nums">
+                {waterMl.toLocaleString()}
+              </span>
+              <span className="text-xs text-[#8E92A4] font-semibold">/ 2,500 ml</span>
+            </div>
+            <div className="w-full bg-white/5 h-2 rounded-full mt-2 overflow-hidden">
+              <div 
+                className="bg-gradient-to-r from-[#00F0FF] to-[#007AFF] h-full rounded-full transition-all duration-300"
+                style={{ width: `${Math.min(100, Math.round((waterMl / 2500) * 100))}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Quick Water Buttons */}
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => onAddWater(250)}
+              className="flex-1 py-2 px-2.5 rounded-xl bg-[#1A1D27] hover:bg-[#222634] text-white text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/5 text-center"
+            >
+              +250 ml
+            </button>
+            <button
+              onClick={() => onAddWater(500)}
+              className="flex-1 py-2 px-2.5 rounded-xl bg-[#1A1D27] hover:bg-[#222634] text-[#00F0FF] text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/5 text-center"
+            >
+              +500 ml
+            </button>
+            <button
+              onClick={onResetWater}
+              title="Reiniciar a 0 ml"
+              className="py-2 px-3 rounded-xl bg-[#1A1D27] hover:bg-rose-500/20 text-[#6F7485] hover:text-rose-400 text-xs font-semibold transition-all cursor-pointer active:scale-95 border border-white/5"
+            >
+              Reiniciar
+            </button>
+          </div>
+        </div>
+
+        {/* Card 2: Ritmo Nutricional & Horarios (Comidas cada 4h para Gastritis o Ayuno) */}
+        <div className="bg-[#13151D]/90 backdrop-blur-2xl border border-white/[0.06] rounded-3xl p-5 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#A1FF00]/10 border border-[#A1FF00]/25 flex items-center justify-center text-[#A1FF00]">
+                <Clock className="w-4 h-4 stroke-[2.5]" />
+              </div>
+              <div>
+                <h4 className="text-sm font-bold text-white">Ritmo de Comidas & Ventana</h4>
+                <p className="text-[11px] text-[#8E92A4]">Control gástrico y tiempo entre ingestas</p>
+              </div>
+            </div>
+
+            {/* Mode Selector */}
+            <div className="flex items-center bg-[#181B26] p-0.5 rounded-xl border border-white/5 text-[10px]">
+              <button
+                onClick={() => handleSwitchScheduleMode('fractional_4h')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  scheduleMode === 'fractional_4h' 
+                    ? 'bg-[#A1FF00] text-black shadow-sm font-black' 
+                    : 'text-[#8E92A4] hover:text-white'
+                }`}
+              >
+                Cada 4h
+              </button>
+              <button
+                onClick={() => handleSwitchScheduleMode('fasting')}
+                className={`px-2.5 py-1 rounded-lg font-bold transition-all cursor-pointer ${
+                  scheduleMode === 'fasting' 
+                    ? 'bg-[#A1FF00] text-black shadow-sm font-black' 
+                    : 'text-[#8E92A4] hover:text-white'
+                }`}
+              >
+                Ayuno
+              </button>
+            </div>
+          </div>
+
+          <div>
+            {scheduleMode === 'fractional_4h' ? (
+              <div>
+                <span className="text-[11px] text-[#A1FF00] font-bold uppercase tracking-wider block">
+                  Régimen Fraccionado (Recomendado para Gastritis)
+                </span>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black font-mono text-white tabular-nums">
+                    {hoursSinceLastMeal.toFixed(1)} <span className="text-xs font-normal text-[#8E92A4]">horas desde última ingesta</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#8E92A4] mt-1">
+                  {hoursSinceLastMeal >= 4 
+                    ? '⚠️ Han pasado más de 4 horas. Momento sugerido para tu siguiente porción/colación.'
+                    : `Siguiente comida sugerida en aprox. ${(4 - hoursSinceLastMeal).toFixed(1)} horas.`}
+                </p>
+              </div>
+            ) : (
+              <div>
+                <span className="text-[11px] text-amber-400 font-bold uppercase tracking-wider block">
+                  Protocolo de Ayuno ({fastingState?.protocol || '16:8'})
+                </span>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="text-2xl sm:text-3xl font-black font-mono text-white tabular-nums">
+                    {fastingHours.toFixed(1)} <span className="text-xs font-normal text-[#8E92A4]">/ {fastingState?.targetHours || 16} h</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#8E92A4] mt-1">
+                  Ventana de ayuno activo. Consume líquidos sin calorías.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="pt-1">
+            <button
+              onClick={handleLogMealTimeNow}
+              className="w-full py-2 px-3 rounded-xl bg-white/[0.06] hover:bg-white/10 text-white text-xs font-bold transition-all cursor-pointer active:scale-95 border border-white/10 flex items-center justify-center gap-1.5"
+            >
+              <CheckCircle2 className="w-3.5 h-3.5 text-[#A1FF00]" />
+              <span>Marcar Ingesta Ahora (Reiniciar Intervalo)</span>
+            </button>
+          </div>
+        </div>
+
       </div>
 
-      {/* Heart Rate Training Zones (Coros, Polar, Apple Watch) */}
-      <HeartRateZones
-        workouts={effectiveDayWorkouts}
-        maxHrEstimate={220 - (profile?.age || 25)}
-      />
-
-      {/* Welcoming Zero-State for Fresh Users */}
-      {effectiveAllMeals.length === 0 && (
-        <div className="p-4 sm:p-5 rounded-3xl bg-[#13151D] border border-white/[0.08] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs shadow-sm">
-          <div>
-            <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-white/10 text-white tracking-wide inline-block mb-1.5">
-              Espacio Privado Listo
+      {/* Entrenamientos del Día */}
+      <div className="bg-[#13151D]/90 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Zap className="w-5 h-5 text-[#A1FF00]" />
+            <h3 className="text-[17px] font-black text-white tracking-tight">
+              Entrenamientos del Día
+            </h3>
+            <span className="text-xs text-[#8E92A4] font-mono">
+              ({effectiveDayWorkouts.length})
             </span>
-            <h4 className="font-bold text-white text-sm">Comienza tu plan desde cero</h4>
-            <p className="text-[#8E92A4] mt-0.5">
-              Tus datos son 100% privados en este dispositivo. Sube tu propio PDF en "Dietas por Mes" o prueba una dieta clínica de ejemplo.
-            </p>
           </div>
-          {onLoadDemoPlan && (
+
+          {onOpenQuickWorkout && (
             <button
-              onClick={onLoadDemoPlan}
-              className="px-4 py-2.5 rounded-xl bg-white hover:bg-slate-200 text-black font-extrabold text-xs whitespace-nowrap cursor-pointer transition-colors active:scale-95 shadow-sm"
+              onClick={onOpenQuickWorkout}
+              className="flex items-center gap-1 px-3 py-1.5 text-xs font-black text-black bg-[#A1FF00] hover:bg-[#8FE000] rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
             >
-              🌟 Cargar Dieta de Ejemplo (Loretta)
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>Registrar Entreno</span>
             </button>
           )}
         </div>
-      )}
+
+        {effectiveDayWorkouts.length === 0 ? (
+          <div className="p-8 text-center border border-dashed border-white/10 rounded-2xl space-y-1.5">
+            <p className="text-xs font-bold text-white">
+              No hay entrenamientos registrados hoy ({formattedDateTitle}).
+            </p>
+            <p className="text-[11px] text-[#8E92A4] max-w-md mx-auto">
+              Tus calorías activas y pasos permanecen en 0 hasta registrar una sesión manual o subir archivo de Coros, Polar o Apple Watch.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {effectiveDayWorkouts.map(w => (
+              <div key={w.id} className="p-3.5 rounded-2xl bg-[#181B26] border border-white/5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/5 flex items-center justify-center text-[#A1FF00]">
+                    <Zap className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-white">{w.title}</h4>
+                    <span className="text-[11px] text-[#8E92A4] font-mono">
+                      {w.durationMinutes} min · <strong className="text-white">{w.caloriesBurned} kcal</strong> {w.distanceKm ? `· ${w.distanceKm} km` : ''} {w.avgHeartRate ? `· ${w.avgHeartRate} bpm` : ''}
+                    </span>
+                  </div>
+                </div>
+                {onDeleteWorkout && (
+                  <button
+                    onClick={() => onDeleteWorkout(w.id)}
+                    className="p-1.5 text-[#656A7B] hover:text-rose-400 cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 2-Column Responsive Split: Trends & Heart Rate Training Zones */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <WeeklyTrendChart trendData={trendData} />
+        <HeartRateZones
+          workouts={effectiveDayWorkouts}
+          maxHrEstimate={220 - (profile?.age || 25)}
+        />
+      </div>
 
       {/* Comidas del Día / Food Plan */}
-      <div className="bg-[#13151D] rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
+      <div className="bg-[#13151D]/90 backdrop-blur-2xl rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
         
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -522,7 +699,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
           <button
             onClick={() => onOpenAddMealModal()}
-            className="flex items-center gap-1 px-3 py-1.5 text-xs font-black text-black bg-white hover:bg-slate-200 rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
+            className="flex items-center gap-1 px-3 py-1.5 text-xs font-black text-black bg-[#A1FF00] hover:bg-[#8FE000] rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
           >
             <Plus className="w-3.5 h-3.5 stroke-[3]" />
             <span>Añadir</span>
@@ -559,7 +736,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#A1FF00] shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -568,8 +745,13 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                           {entry.dish.name}
                         </span>
                         <span className="text-[11px] text-[#8E92A4] font-mono">
-                          {entry.dish.calories} kcal · <span className="text-[#FF9500] font-bold">{entry.dish.proteinG}g P</span> · ${entry.dish.costPerServingMxn.toFixed(2)} MXN
+                          {entry.dish.calories} kcal · <span className="text-[#A1FF00] font-bold">{entry.dish.proteinG}g P</span> · {entry.dish.carbsG}g C
                         </span>
+                        {(entry.dish.nutritionistName || entry.dish.sourceDocument) && (
+                          <span className="text-sky-400 font-semibold block text-[10px] mt-0.5">
+                            📋 {entry.dish.nutritionistName || entry.dish.sourceDocument}
+                          </span>
+                        )}
                       </div>
                     </button>
                     <button
@@ -611,7 +793,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#A1FF00] shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -620,8 +802,13 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                           {entry.dish.name}
                         </span>
                         <span className="text-[11px] text-[#8E92A4] font-mono">
-                          {entry.dish.calories} kcal · <span className="text-[#FF9500] font-bold">{entry.dish.proteinG}g P</span> · ${entry.dish.costPerServingMxn.toFixed(2)} MXN
+                          {entry.dish.calories} kcal · <span className="text-[#A1FF00] font-bold">{entry.dish.proteinG}g P</span> · {entry.dish.carbsG}g C
                         </span>
+                        {(entry.dish.nutritionistName || entry.dish.sourceDocument) && (
+                          <span className="text-sky-400 font-semibold block text-[10px] mt-0.5">
+                            📋 {entry.dish.nutritionistName || entry.dish.sourceDocument}
+                          </span>
+                        )}
                       </div>
                     </button>
                     <button
@@ -663,7 +850,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#A1FF00] shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -672,8 +859,13 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                           {entry.dish.name}
                         </span>
                         <span className="text-[11px] text-[#8E92A4] font-mono">
-                          {entry.dish.calories} kcal · <span className="text-[#FF9500] font-bold">{entry.dish.proteinG}g P</span> · ${entry.dish.costPerServingMxn.toFixed(2)} MXN
+                          {entry.dish.calories} kcal · <span className="text-[#A1FF00] font-bold">{entry.dish.proteinG}g P</span> · {entry.dish.carbsG}g C
                         </span>
+                        {(entry.dish.nutritionistName || entry.dish.sourceDocument) && (
+                          <span className="text-sky-400 font-semibold block text-[10px] mt-0.5">
+                            📋 {entry.dish.nutritionistName || entry.dish.sourceDocument}
+                          </span>
+                        )}
                       </div>
                     </button>
                     <button
@@ -702,7 +894,7 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                       className="flex items-center gap-3 min-w-0 text-left cursor-pointer"
                     >
                       {entry.eaten ? (
-                        <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+                        <CheckCircle2 className="w-5 h-5 text-[#A1FF00] shrink-0" />
                       ) : (
                         <Circle className="w-5 h-5 text-[#656A7B] shrink-0" />
                       )}
@@ -711,8 +903,13 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
                           {entry.dish.name}
                         </span>
                         <span className="text-[11px] text-[#8E92A4] font-mono">
-                          {entry.dish.calories} kcal · <span className="text-[#FF9500] font-bold">{entry.dish.proteinG}g P</span> · ${entry.dish.costPerServingMxn.toFixed(2)} MXN
+                          {entry.dish.calories} kcal · <span className="text-[#A1FF00] font-bold">{entry.dish.proteinG}g P</span> · {entry.dish.carbsG}g C
                         </span>
+                        {(entry.dish.nutritionistName || entry.dish.sourceDocument) && (
+                          <span className="text-sky-400 font-semibold block text-[10px] mt-0.5">
+                            📋 {entry.dish.nutritionistName || entry.dish.sourceDocument}
+                          </span>
+                        )}
                       </div>
                     </button>
                     <button
@@ -729,90 +926,6 @@ export const DailyDashboard: React.FC<DailyDashboardProps> = ({
 
         </div>
 
-      </div>
-
-      {/* Workouts Widget */}
-      <div className="bg-[#13151D] rounded-3xl p-5 sm:p-6 border border-white/[0.06] shadow-sm transition-colors">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <h3 className="text-[17px] font-black text-white tracking-tight">
-              Workouts
-            </h3>
-          </div>
-
-          <button
-            onClick={() => onNavigateTab && onNavigateTab('workouts')}
-            className="text-xs font-bold text-white hover:text-slate-300 cursor-pointer flex items-center gap-1"
-          >
-            <span>See all</span>
-            <span>&gt;</span>
-          </button>
-        </div>
-
-        {effectiveDayWorkouts.length === 0 ? (
-          <div className="py-8 text-center border border-dashed border-white/10 rounded-2xl bg-[#181B26]/50">
-            <Watch className="w-7 h-7 text-[#6F7485] mx-auto mb-2" />
-            <p className="text-xs text-[#8E92A4]">Sin entrenamientos registrados hoy.</p>
-            {onOpenQuickWorkout && (
-              <button
-                onClick={onOpenQuickWorkout}
-                className="mt-3 px-4 py-2 text-xs font-bold text-black bg-white hover:bg-slate-200 rounded-full transition-all cursor-pointer shadow-sm active:scale-95"
-              >
-                + Registrar Sesión / Captura
-              </button>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-2.5">
-            {effectiveDayWorkouts.map(w => (
-              <div 
-                key={w.id} 
-                className="p-4 rounded-2xl bg-[#181B26] border border-white/[0.04] flex items-center justify-between gap-3 hover:border-white/10 transition-colors"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  {/* Athletic Activity Icon Circle */}
-                  <div className="w-10 h-10 rounded-full bg-[#13151D] border border-white/10 flex items-center justify-center text-white shrink-0">
-                    <Zap className="w-5 h-5" />
-                  </div>
-
-                  <div className="min-w-0">
-                    <h5 className="text-sm font-black text-white truncate">
-                      {w.title}
-                    </h5>
-                    <div className="flex items-center gap-2 text-xs text-[#8E92A4] font-mono mt-0.5">
-                      {w.distanceKm ? (
-                        <span className="font-bold text-white">{w.distanceKm} km</span>
-                      ) : (
-                        <span className="font-bold text-white">{w.durationMinutes} min</span>
-                      )}
-                      <span>·</span>
-                      <span className="capitalize">{w.deviceSource}</span>
-                      <span>·</span>
-                      <span className="text-slate-400">Today &gt;</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="text-base font-black font-mono text-white">
-                      +{w.caloriesBurned}
-                    </div>
-                    <span className="text-[10px] text-[#7E8494] font-medium block">kcal activas</span>
-                  </div>
-                  {onDeleteWorkout && (
-                    <button
-                      onClick={() => onDeleteWorkout(w.id)}
-                      className="p-1.5 text-[#6F7485] hover:text-[#FF453A] transition-colors cursor-pointer"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
       </div>
 
     </div>

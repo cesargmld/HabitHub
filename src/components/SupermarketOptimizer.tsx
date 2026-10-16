@@ -124,28 +124,24 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
             </button>
           )}
 
-          {/* Subtab navigation */}
-          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#12131A] border border-slate-200 dark:border-white/5 rounded-2xl shadow-sm self-start sm:self-auto">
+          {/* Subtab navigation: 2 Clear Tabs */}
+          <div className="flex items-center gap-1 p-1 bg-white dark:bg-[#12131A] border border-slate-200 dark:border-white/10 rounded-2xl shadow-sm self-start sm:self-auto">
             <button
               onClick={() => setActiveSubTab('optimized_list')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeSubTab === 'optimized_list' ? 'bg-[#1C1C1E] dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                activeSubTab === 'optimized_list' 
+                  ? 'bg-[#A1FF00] text-black shadow-sm font-black' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
-              Lista por Tienda
-            </button>
-            <button
-              onClick={() => setActiveSubTab('perishable_split')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeSubTab === 'perishable_split' ? 'bg-[#1C1C1E] dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              Perecederos vs Granel
+              Lista por Tienda (Costco vs H-E-B)
             </button>
             <button
               onClick={() => setActiveSubTab('price_catalog')}
-              className={`px-3 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
-                activeSubTab === 'price_catalog' ? 'bg-[#1C1C1E] dark:bg-white text-white dark:text-black shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+                activeSubTab === 'price_catalog' 
+                  ? 'bg-[#A1FF00] text-black shadow-sm font-black' 
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Catálogo de Precios
@@ -326,6 +322,17 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
 
       {/* SUBTAB 1: OPTIMIZED STORE LIST (COSTCO VS HEB) */}
       {activeSubTab === 'optimized_list' && (
+        allGroceryItems.length === 0 ? (
+          <div className="p-12 text-center bg-white dark:bg-[#12131A] border border-dashed border-slate-200 dark:border-white/10 rounded-3xl space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mx-auto text-[#A1FF00]">
+              <ShoppingCart className="w-6 h-6 stroke-[2]" />
+            </div>
+            <h4 className="text-base font-bold text-slate-900 dark:text-white">Tu lista de compras está vacía (0 artículos)</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+              No hay comidas asignadas para los días seleccionados. Ve a la pestaña <strong className="text-slate-700 dark:text-slate-200">"Semana"</strong> para programar tus platillos o aplica un plan desde <strong className="text-slate-700 dark:text-slate-200">"Dietas Mes"</strong>.
+            </p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           
           {/* COSTCO COLUMN */}
@@ -461,6 +468,7 @@ export const SupermarketOptimizer: React.FC<SupermarketOptimizerProps> = ({
           </div>
 
         </div>
+        )
       )}
 
       {/* SUBTAB 2: PERISHABLES VS BULK PANTRY SPLIT */}

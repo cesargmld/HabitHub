@@ -273,18 +273,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
           </div>
 
-          {/* Demo Data & Reset Actions */}
-          <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-2">
-            {onLoadDemoPlan && (
-              <button
-                type="button"
-                onClick={() => { onLoadDemoPlan(); onClose(); }}
-                className="text-xs text-[#007AFF] hover:underline font-bold cursor-pointer"
-              >
-                🌟 Cargar Dieta de Ejemplo (Loretta)
-              </button>
-            )}
-            {onResetAllData && (
+          {/* Reset Actions */}
+          {onResetAllData && (
+            <div className="pt-3 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
+              <span className="text-[11px] text-slate-500">¿Deseas empezar completamente desde cero?</span>
               <button
                 type="button"
                 onClick={() => { onResetAllData(); onClose(); }}
@@ -292,8 +284,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               >
                 🗑️ Restablecer todo a 0
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           <div className="pt-2 flex justify-end gap-2">
             <button

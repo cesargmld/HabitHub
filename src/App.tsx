@@ -9,6 +9,7 @@ import { DietUploadManager } from './components/DietUploadManager';
 import { BarcodeScannerModal } from './components/BarcodeScannerModal';
 import { WeeklyReportPdfModal } from './components/WeeklyReportPdfModal';
 import { AppleHealthSyncModal } from './components/AppleHealthSyncModal';
+import { CloudSyncModal } from './components/CloudSyncModal';
 import { 
   UserProfile, 
   WorkoutRecord, 
@@ -211,6 +212,10 @@ export default function App() {
   const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
   const [isWeeklyReportOpen, setIsWeeklyReportOpen] = useState(false);
   const [isAppleHealthModalOpen, setIsAppleHealthModalOpen] = useState(false);
+  const [isCloudSyncOpen, setIsCloudSyncOpen] = useState(false);
+  const [syncKey, setSyncKey] = useState<string>(() => {
+    return localStorage.getItem('habithub_synckey_v5') || 'cesar';
+  });
   const [isAiOptimizing, setIsAiOptimizing] = useState(false);
   const [aiAdvice, setAiAdvice] = useState<string[]>([]);
   const [selectedMealTimeForAdd, setSelectedMealTimeForAdd] = useState<MealTime>('lunch');
@@ -269,13 +274,13 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_TIMEFRAME, String(timeframeMultiplier));
   }, [timeframeMultiplier]);
 
-  // Water hydration state per day (ml)
+  // Water hydration state per day (ml) - Clean 0 starting state
   const [waterRecords, setWaterRecords] = useState<Record<string, number>>(() => {
     const saved = localStorage.getItem('personal_hub_water_v3');
     if (saved) {
       try { return JSON.parse(saved); } catch {}
     }
-    return { [todayStr]: 1750 };
+    return { [todayStr]: 0 };
   });
 
   const currentWaterMl = waterRecords[currentDate] || 0;
@@ -393,13 +398,26 @@ export default function App() {
   };
 
   const handleDeleteMonthlyDiet = (dietId: string) => {
-    setMonthlyDiets(prev => prev.filter(d => d.id !== dietId));
+    setMonthlyDiets(prev => {
+      const remaining = prev.filter(d => d.id !== dietId);
+      if (remaining.length === 0) {
+        setMealPlan([]);
+        setDishes([]);
+        localStorage.removeItem(STORAGE_KEY_MEALPLAN);
+        localStorage.removeItem(STORAGE_KEY_DISHES);
+      }
+      return remaining;
+    });
   };
 
   const handleClearAllMonthlyDiets = () => {
     if (window.confirm('¿Seguro que deseas eliminar todas las dietas registradas y comenzar desde cero?')) {
       setMonthlyDiets([]);
+      setMealPlan([]);
+      setDishes([]);
       localStorage.removeItem(STORAGE_KEY_MONTHLY_DIETS);
+      localStorage.removeItem(STORAGE_KEY_MEALPLAN);
+      localStorage.removeItem(STORAGE_KEY_DISHES);
     }
   };
 
@@ -605,6 +623,7 @@ export default function App() {
         onChangeDate={setCurrentDate}
         onOpenProfileModal={() => setIsProfileOpen(true)}
         onOpenWeeklyReport={() => setIsWeeklyReportOpen(true)}
+        onOpenCloudSync={() => setIsCloudSyncOpen(true)}
         userName={profile.name}
         theme={theme}
         onToggleTheme={toggleTheme}
@@ -822,6 +841,39 @@ export default function App() {
               notes: `Sincronizado vía Apple Health: ${metrics.totalSteps.toLocaleString()} pasos, FC reposo ${metrics.restingHeartRate || 60} bpm.`
             });
           }
+        }}
+      />
+
+      {/* Modal: Cloud Sync across iPad, iPhone, Web */}
+      <CloudSyncModal
+        isOpen={isCloudSyncOpen}
+        onClose={() => setIsCloudSyncOpen(false)}
+        syncKey={syncKey}
+        onChangeSyncKey={setSyncKey}
+        onExportAllData={() => ({
+          version: 'habithub-v5',
+          exportDate: new Date().toISOString(),
+          profile,
+          workouts,
+          dishes,
+          mealPlan,
+          monthlyDiets,
+          fastingState,
+          waterRecords,
+          selectedCookingDays,
+          timeframeMultiplier
+        })}
+        onImportAllData={(data: any) => {
+          if (!data) return;
+          if (data.profile) setProfile(data.profile);
+          if (data.workouts) setWorkouts(data.workouts);
+          if (data.dishes) setDishes(data.dishes);
+          if (data.mealPlan) setMealPlan(data.mealPlan);
+          if (data.monthlyDiets) setMonthlyDiets(data.monthlyDiets);
+          if (data.fastingState) setFastingState(data.fastingState);
+          if (data.waterRecords) setWaterRecords(data.waterRecords);
+          if (data.selectedCookingDays) setSelectedCookingDays(data.selectedCookingDays);
+          if (data.timeframeMultiplier) setTimeframeMultiplier(data.timeframeMultiplier);
         }}
       />
 
